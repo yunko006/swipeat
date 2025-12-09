@@ -7,6 +7,10 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
+    POLAR_ACCESS_TOKEN: z.string().min(1),
+    POLAR_WEBHOOK_SECRET: z.string().min(1),
+    POLAR_SERVER: z.enum(["sandbox", "production"]).default("sandbox"),
+    POLAR_SUCCESS_URL: z.string().url(),
     BETTER_AUTH_SECRET:
       process.env.NODE_ENV === "production"
         ? z.string()
@@ -31,6 +35,10 @@ export const env = createEnv({
    * middlewares) or client-side so we need to destruct manually.
    */
   runtimeEnv: {
+    POLAR_ACCESS_TOKEN: process.env.POLAR_ACCESS_TOKEN,
+    POLAR_WEBHOOK_SECRET: process.env.POLAR_WEBHOOK_SECRET,
+    POLAR_SERVER: process.env.POLAR_SERVER,
+    POLAR_SUCCESS_URL: process.env.POLAR_SUCCESS_URL,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
