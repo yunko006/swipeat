@@ -21,7 +21,7 @@ export function LandingNav({ session, onLogout }: LandingNavProps) {
           <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center shrink-0">
             <span className="font-bold text-accent-foreground text-sm">Y</span>
           </div>
-          <span className="font-bold text-lg tracking-tight">Y1 Stack</span>
+          <span className="font-bold text-lg tracking-tight">swipeat</span>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <div className="shrink-0">
@@ -43,9 +43,7 @@ export function LandingNav({ session, onLogout }: LandingNavProps) {
             </Link>
           ) : (
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium">
-                {session.user?.name}
-              </span>
+              <span className="text-sm font-medium">{session.user?.name}</span>
               <form>
                 <Button
                   className="bg-accent hover:bg-accent/90 text-accent-foreground font-medium"

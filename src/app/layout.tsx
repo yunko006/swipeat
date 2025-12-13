@@ -7,8 +7,8 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "Y1 Stack",
-  description: "The ultimate SaaS toolkit",
+  title: "swipeat",
+  description: "let me cook bro",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
