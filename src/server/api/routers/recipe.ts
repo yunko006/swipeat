@@ -1,0 +1,68 @@
+// ABOUTME: Recipe tRPC router
+// ABOUTME: Handles recipe CRUD operations
+
+import { z } from "zod";
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { recipes } from "@/server/db/schema";
+import { getRecipeBySourceUrl } from "@/server/db/queries/recipes";
+
+const saveRecipeInput = z.object({
+	sourceUrl: z.string().url(),
+	sourcePlatform: z.enum(["tiktok", "instagram", "youtube"]),
+	title: z.string().min(1),
+	description: z.string().optional(),
+	imageUrl: z.string().url().optional(),
+	videoUrl: z.string().url().optional(),
+});
+
+export const recipeRouter = createTRPCRouter({
+	save: protectedProcedure
+		.input(saveRecipeInput)
+		.mutation(async ({ ctx, input }) => {
+			const existingRecipe = await getRecipeBySourceUrl(input.sourceUrl);
+
+			if (existingRecipe) {
+				return {
+					success: true,
+					recipeId: existingRecipe.id,
+					isNew: false,
+				};
+			}
+
+			const [newRecipe] = await ctx.db
+				.insert(recipes)
+				.values({
+					sourceUrl: input.sourceUrl,
+					sourcePlatform: input.sourcePlatform,
+					title: input.title,
+					description: input.description,
+					imageUrl: input.imageUrl,
+					ingredients: [],
+					steps: [],
+					createdByUserId: ctx.session.user.id,
+				})
+				.returning();
+
+			return {
+				success: true,
+				recipeId: newRecipe!.id,
+				isNew: true,
+			};
+		}),
+
+	getById: protectedProcedure
+		.input(z.object({ id: z.string().uuid() }))
+		.query(async ({ ctx, input }) => {
+			const recipe = await ctx.db.query.recipes.findFirst({
+				where: (recipes, { eq }) => eq(recipes.id, input.id),
+			});
+
+			return recipe ?? null;
+		}),
+
+	getBySourceUrl: protectedProcedure
+		.input(z.object({ sourceUrl: z.string().url() }))
+		.query(async ({ input }) => {
+			return await getRecipeBySourceUrl(input.sourceUrl);
+		}),
+});
