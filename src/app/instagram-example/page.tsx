@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { InstagramResponse, InstagramError } from "@/types/instagram";
+import { api } from "@/trpc/react";
 
 const extractShortcode = (instagramUrl: string) => {
   // Exemples d'URLs Instagram:
@@ -36,6 +37,15 @@ export default function InstagramTestPage() {
     mutationFn: fetchInstagram,
   });
 
+  const saveRecipe = api.recipe.save.useMutation({
+    onSuccess: (data) => {
+      console.log("Recipe saved:", data);
+    },
+    onError: (error) => {
+      console.error("Error saving recipe:", error);
+    },
+  });
+
   const handleSubmit = () => {
     const shortcode = extractShortcode(url);
 
@@ -45,6 +55,19 @@ export default function InstagramTestPage() {
     }
 
     mutation.mutate(shortcode);
+  };
+
+  const handleSaveRecipe = () => {
+    if (!mutation.data || !url) return;
+
+    saveRecipe.mutate({
+      sourceUrl: url,
+      sourcePlatform: "instagram",
+      title: mutation.data.description || "Sans titre",
+      description: mutation.data.description,
+      imageUrl: mutation.data.thumbnail,
+      videoUrl: mutation.data.videoUrl,
+    });
   };
 
   return (
@@ -71,9 +94,35 @@ export default function InstagramTestPage() {
         )}
 
         {mutation.isSuccess && mutation.data && (
-          <pre className="p-4 bg-gray-100 text-black rounded overflow-auto text-xs">
-            {JSON.stringify(mutation.data, null, 2)}
-          </pre>
+          <div className="space-y-4">
+            <pre className="p-4 bg-gray-100 text-black rounded overflow-auto text-xs">
+              {JSON.stringify(mutation.data, null, 2)}
+            </pre>
+
+            <Button
+              onClick={handleSaveRecipe}
+              disabled={saveRecipe.isPending}
+              className="w-full"
+            >
+              {saveRecipe.isPending ? "Saving..." : "Save Recipe"}
+            </Button>
+
+            {saveRecipe.isSuccess && (
+              <div className="p-4 bg-green-100 text-green-900 rounded">
+                Recipe saved successfully!
+                <br />
+                Recipe ID: {saveRecipe.data.recipeId}
+                <br />
+                {saveRecipe.data.isNew ? "New recipe created" : "Recipe already existed"}
+              </div>
+            )}
+
+            {saveRecipe.isError && (
+              <div className="p-4 bg-red-100 text-red-900 rounded">
+                Error saving recipe: {saveRecipe.error.message}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
