@@ -6,6 +6,7 @@ import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { recipes } from "@/server/db/schema";
 import { getRecipeBySourceUrl } from "@/server/db/queries/recipes";
 import { extractRecipeFromDescription } from "@/lib/ai/extract-recipe";
+import { analyzeRecipeVideo } from "@/lib/twelve-labs/analyze-video";
 
 const saveRecipeInput = z.object({
 	sourceUrl: z.string().url(),
@@ -74,7 +75,6 @@ export const recipeRouter = createTRPCRouter({
 				sourcePlatform: z.enum(["tiktok", "instagram", "youtube"]),
 				description: z.string().min(1),
 				imageUrl: z.string().url().optional(),
-				videoUrl: z.string().url().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -97,6 +97,28 @@ export const recipeRouter = createTRPCRouter({
 
 			const extracted = await extractRecipeFromDescription(input.description);
 
+			// Analyze video to get step timestamps using sourceUrl
+			let stepsWithTimestamps = extracted.steps;
+			try {
+				const timestamps = await analyzeRecipeVideo(
+					input.sourceUrl,
+					extracted,
+				);
+
+				// Merge timestamps into steps
+				stepsWithTimestamps = extracted.steps.map((step) => {
+					const timestamp = timestamps.find((t) => t.step === step.order);
+					return {
+						...step,
+						videoStartTime: timestamp?.startSeconds,
+						videoEndTime: timestamp?.endSeconds,
+					};
+				});
+			} catch (error) {
+				console.error("Failed to analyze video with Twelve Labs:", error);
+				// Continue without timestamps if analysis fails
+			}
+
 			const title = input.description.split("\n")[0] || "Sans titre";
 
 			const [newRecipe] = await ctx.db
@@ -108,7 +130,7 @@ export const recipeRouter = createTRPCRouter({
 					description: input.description,
 					imageUrl: input.imageUrl,
 					ingredients: extracted.ingredients,
-					steps: extracted.steps,
+					steps: stepsWithTimestamps,
 					prepTimeMinutes: extracted.prepTimeMinutes,
 					cookTimeMinutes: extracted.cookTimeMinutes,
 					servings: extracted.servings,
@@ -121,7 +143,10 @@ export const recipeRouter = createTRPCRouter({
 				success: true,
 				recipeId: newRecipe!.id,
 				isNew: true,
-				extracted,
+				extracted: {
+					...extracted,
+					steps: stepsWithTimestamps,
+				},
 			};
 		}),
 });
