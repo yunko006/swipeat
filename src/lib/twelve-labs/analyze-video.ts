@@ -3,6 +3,7 @@
 
 import { twelveLabsClient } from "./client";
 import type { RecipeExtraction } from "@/lib/ai/schemas";
+import { uploadVideoToTwelveLabs } from "./upload-video";
 
 interface StepTimestamp {
 	step: number;
@@ -14,8 +15,8 @@ export async function analyzeRecipeVideo(
 	videoUrl: string,
 	extractedRecipe: RecipeExtraction,
 ): Promise<StepTimestamp[]> {
-	// TODO: Remove hardcoded videoId once upload is implemented
-	const videoId = "6946b55b30cff2adb3b4e50e";
+	// Upload video to Twelve Labs and get videoId
+	const videoId = await uploadVideoToTwelveLabs(videoUrl);
 
 	// Build the prompt from extracted recipe steps
 	const stepsPrompt = extractedRecipe.steps
