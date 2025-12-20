@@ -65,6 +65,7 @@ export default function InstagramTestPage() {
       sourcePlatform: "instagram",
       description: mutation.data.description || "Sans description",
       imageUrl: mutation.data.thumbnail,
+      videoUrl: mutation.data.videoUrl,
     });
   };
 
