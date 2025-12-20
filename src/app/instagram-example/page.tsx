@@ -37,12 +37,12 @@ export default function InstagramTestPage() {
     mutationFn: fetchInstagram,
   });
 
-  const saveRecipe = api.recipe.save.useMutation({
+  const extractAndSave = api.recipe.extractAndSave.useMutation({
     onSuccess: (data) => {
-      console.log("Recipe saved:", data);
+      console.log("Recipe extracted and saved:", data);
     },
     onError: (error) => {
-      console.error("Error saving recipe:", error);
+      console.error("Error extracting recipe:", error);
     },
   });
 
@@ -57,14 +57,13 @@ export default function InstagramTestPage() {
     mutation.mutate(shortcode);
   };
 
-  const handleSaveRecipe = () => {
+  const handleExtractAndSave = () => {
     if (!mutation.data || !url) return;
 
-    saveRecipe.mutate({
+    extractAndSave.mutate({
       sourceUrl: url,
       sourcePlatform: "instagram",
-      title: mutation.data.description || "Sans titre",
-      description: mutation.data.description,
+      description: mutation.data.description || "Sans description",
       imageUrl: mutation.data.thumbnail,
       videoUrl: mutation.data.videoUrl,
     });
@@ -100,26 +99,49 @@ export default function InstagramTestPage() {
             </pre>
 
             <Button
-              onClick={handleSaveRecipe}
-              disabled={saveRecipe.isPending}
+              onClick={handleExtractAndSave}
+              disabled={extractAndSave.isPending}
               className="w-full"
             >
-              {saveRecipe.isPending ? "Saving..." : "Save Recipe"}
+              {extractAndSave.isPending ? "Extracting with AI..." : "Extract & Save Recipe"}
             </Button>
 
-            {saveRecipe.isSuccess && (
-              <div className="p-4 bg-green-100 text-green-900 rounded">
-                Recipe saved successfully!
-                <br />
-                Recipe ID: {saveRecipe.data.recipeId}
-                <br />
-                {saveRecipe.data.isNew ? "New recipe created" : "Recipe already existed"}
+            {extractAndSave.isSuccess && (
+              <div className="p-4 bg-green-100 text-green-900 rounded space-y-2">
+                <div className="font-bold">
+                  Recipe {extractAndSave.data.isNew ? "extracted and saved" : "already exists"}!
+                </div>
+                <div>Recipe ID: {extractAndSave.data.recipeId}</div>
+
+                {extractAndSave.data.extracted && (
+                  <div className="mt-4 space-y-2">
+                    <div className="font-semibold">Extracted Data:</div>
+                    <div>Ingredients: {extractAndSave.data.extracted.ingredients.length}</div>
+                    <div>Steps: {extractAndSave.data.extracted.steps.length}</div>
+                    {extractAndSave.data.extracted.servings && (
+                      <div>Servings: {extractAndSave.data.extracted.servings}</div>
+                    )}
+                    {extractAndSave.data.extracted.prepTimeMinutes && (
+                      <div>Prep time: {extractAndSave.data.extracted.prepTimeMinutes} min</div>
+                    )}
+                    {extractAndSave.data.extracted.cookTimeMinutes && (
+                      <div>Cook time: {extractAndSave.data.extracted.cookTimeMinutes} min</div>
+                    )}
+
+                    <details className="mt-2">
+                      <summary className="cursor-pointer font-semibold">View Full Extraction</summary>
+                      <pre className="mt-2 p-2 bg-white text-black rounded text-xs overflow-auto">
+                        {JSON.stringify(extractAndSave.data.extracted, null, 2)}
+                      </pre>
+                    </details>
+                  </div>
+                )}
               </div>
             )}
 
-            {saveRecipe.isError && (
+            {extractAndSave.isError && (
               <div className="p-4 bg-red-100 text-red-900 rounded">
-                Error saving recipe: {saveRecipe.error.message}
+                Error extracting recipe: {extractAndSave.error.message}
               </div>
             )}
           </div>
