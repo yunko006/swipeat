@@ -22,6 +22,7 @@ export const env = createEnv({
     RAPIDAPI_KEY: z.string().min(1),
     ANTHROPIC_API_KEY: z.string().min(1),
     TWELVE_LABS_API_KEY: z.string().min(1),
+    TWELVE_LABS_INDEX_ID: z.string().min(1),
   },
 
   /**
@@ -48,6 +49,7 @@ export const env = createEnv({
     RAPIDAPI_KEY: process.env.RAPIDAPI_KEY,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     TWELVE_LABS_API_KEY: process.env.TWELVE_LABS_API_KEY,
+    TWELVE_LABS_INDEX_ID: process.env.TWELVE_LABS_INDEX_ID,
     NEXT_PUBLIC_BETTER_AUTH_URL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
   },
   /**
