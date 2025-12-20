@@ -35,9 +35,9 @@ export const recipes = swipeatTable("recipes", {
 			order: number;
 			instruction: string;
 			durationMinutes?: number;
-			startTime?: number;
-			endTime?: number;
-			chunkUrl?: string;
+			videoStartTime?: number;
+			videoEndTime?: number;
+			videoClipUrl?: string;
 		}>
 	>(),
 	prepTimeMinutes: integer("prep_time_minutes"),
