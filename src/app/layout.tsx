@@ -2,7 +2,7 @@ import "@/styles/globals.css";
 
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-
+import { RootProvider } from "fumadocs-ui/provider/next";
 import { TRPCReactProvider } from "@/trpc/react";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -29,7 +29,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TRPCReactProvider>{children}</TRPCReactProvider>
+          <TRPCReactProvider>
+            <RootProvider>{children}</RootProvider>
+          </TRPCReactProvider>
         </ThemeProvider>
       </body>
     </html>
