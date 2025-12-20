@@ -21,6 +21,7 @@ export const env = createEnv({
       .default("development"),
     RAPIDAPI_KEY: z.string().min(1),
     ANTHROPIC_API_KEY: z.string().min(1),
+    TWELVE_LABS_API_KEY: z.string().min(1),
   },
 
   /**
@@ -46,6 +47,7 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     RAPIDAPI_KEY: process.env.RAPIDAPI_KEY,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    TWELVE_LABS_API_KEY: process.env.TWELVE_LABS_API_KEY,
     NEXT_PUBLIC_BETTER_AUTH_URL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
   },
   /**
