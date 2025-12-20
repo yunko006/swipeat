@@ -65,7 +65,6 @@ export default function InstagramTestPage() {
       sourcePlatform: "instagram",
       description: mutation.data.description || "Sans description",
       imageUrl: mutation.data.thumbnail,
-      videoUrl: mutation.data.videoUrl,
     });
   };
 
@@ -128,8 +127,31 @@ export default function InstagramTestPage() {
                       <div>Cook time: {extractAndSave.data.extracted.cookTimeMinutes} min</div>
                     )}
 
+                    <div className="mt-4">
+                      <div className="font-semibold mb-2">Steps with Timestamps:</div>
+                      <div className="space-y-1 text-sm">
+                        {extractAndSave.data.extracted.steps.map((step) => {
+                          const hasTimestamps = 'videoStartTime' in step && 'videoEndTime' in step;
+                          return (
+                            <div key={step.order} className="flex gap-2">
+                              <span className="font-mono text-blue-600 min-w-20">
+                                {hasTimestamps && step.videoStartTime !== undefined && step.videoEndTime !== undefined
+                                  ? `${step.videoStartTime}s - ${step.videoEndTime}s`
+                                  : hasTimestamps && step.videoStartTime !== undefined
+                                    ? `${step.videoStartTime}s`
+                                    : "--"}
+                              </span>
+                              <span>
+                                {step.order}. {step.instruction}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     <details className="mt-2">
-                      <summary className="cursor-pointer font-semibold">View Full Extraction</summary>
+                      <summary className="cursor-pointer font-semibold">View Full JSON</summary>
                       <pre className="mt-2 p-2 bg-white text-black rounded text-xs overflow-auto">
                         {JSON.stringify(extractAndSave.data.extracted, null, 2)}
                       </pre>
