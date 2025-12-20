@@ -75,6 +75,7 @@ export const recipeRouter = createTRPCRouter({
 				sourcePlatform: z.enum(["tiktok", "instagram", "youtube"]),
 				description: z.string().min(1),
 				imageUrl: z.string().url().optional(),
+				videoUrl: z.string().url().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -97,26 +98,28 @@ export const recipeRouter = createTRPCRouter({
 
 			const extracted = await extractRecipeFromDescription(input.description);
 
-			// Analyze video to get step timestamps using sourceUrl
+			// Analyze video to get step timestamps using videoUrl
 			let stepsWithTimestamps = extracted.steps;
-			try {
-				const timestamps = await analyzeRecipeVideo(
-					input.sourceUrl,
-					extracted,
-				);
+			if (input.videoUrl) {
+				try {
+					const timestamps = await analyzeRecipeVideo(
+						input.videoUrl,
+						extracted,
+					);
 
-				// Merge timestamps into steps
-				stepsWithTimestamps = extracted.steps.map((step) => {
-					const timestamp = timestamps.find((t) => t.step === step.order);
-					return {
-						...step,
-						videoStartTime: timestamp?.startSeconds,
-						videoEndTime: timestamp?.endSeconds,
-					};
-				});
-			} catch (error) {
-				console.error("Failed to analyze video with Twelve Labs:", error);
-				// Continue without timestamps if analysis fails
+					// Merge timestamps into steps
+					stepsWithTimestamps = extracted.steps.map((step) => {
+						const timestamp = timestamps.find((t) => t.step === step.order);
+						return {
+							...step,
+							videoStartTime: timestamp?.startSeconds,
+							videoEndTime: timestamp?.endSeconds,
+						};
+					});
+				} catch (error) {
+					console.error("Failed to analyze video with Twelve Labs:", error);
+					// Continue without timestamps if analysis fails
+				}
 			}
 
 			const title = input.description.split("\n")[0] || "Sans titre";
