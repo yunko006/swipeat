@@ -7,6 +7,6 @@ const create = browser<typeof Config, import("fumadocs-mdx/runtime/types").Inter
   }
 }>();
 const browserCollections = {
-  docs: create.doc("docs", {"hello.md": () => import("../content/docs/hello.md?collection=docs"), }),
+  docs: create.doc("docs", {"hello.md": () => import("../content/docs/hello.md?collection=docs"), "ia/ai-extraction-examples.md": () => import("../content/docs/ia/ai-extraction-examples.md?collection=docs"), }),
 };
 export default browserCollections;
