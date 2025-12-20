@@ -121,11 +121,13 @@ src/app/
 - [ ] Estimation automatique des quantites
 - [ ] Sauvegarde en base de donnees
 
-### Phase 3 - Video processing : GPT-4 Vision + Whisper ou Twelve Labs
+### Phase 3 - Video processing avec Twelve Labs
 
-- [ ] Solution de decoupage video par etape
-- [ ] Synchronisation timestamps avec etapes
-- [ ] Generation clips video individuels
+- [x] Integration Twelve Labs SDK pour analyse video
+- [x] Upload automatique des videos Instagram vers Twelve Labs
+- [x] Extraction des timestamps (debut et fin) pour chaque etape
+- [x] Synchronisation des timestamps avec les etapes extraites par Claude
+- [ ] Generation clips video individuels a partir des timestamps
 - [ ] Stockage videos (S3, Cloudflare, etc.)
 
 ### Phase 4 - Features premium
@@ -217,9 +219,15 @@ users
 
 ### IA pour extraction ingredients
 
-- [ ] Quel provider ? (OpenAI GPT-4 Vision, Claude Vision, Gemini)
-- [ ] Comment parser la description Instagram/TikTok ?
-- [ ] Estimation quantites : modele specifique ou prompt engineering ?
+**Current implementation (MVP):**
+- ✅ Using Claude Sonnet 4 via AI SDK
+- ✅ Extracts ingredients, steps, times from video descriptions
+- ✅ All extraction in English for MVP (cost optimization + international reach)
+
+**Future improvements to consider:**
+- [ ] Detect source language and extract in original language (preserves culinary terms authenticity)
+- [ ] Multi-language support with client-side translation
+- [ ] Video frame analysis for visual ingredient detection
 
 ### Decoupage video
 
@@ -232,6 +240,62 @@ users
 - [ ] Comment recuperer video Instagram/TikTok ? (API officielle, scraping, service tiers)
 - [ ] Gestion des restrictions / rate limits
 - [ ] Droits d'auteur et attribution
+
+## Integration Twelve Labs - Video Analysis
+
+### Ce qui est implemente
+
+Swipeat utilise Twelve Labs pour analyser les videos de recettes et extraire automatiquement les timestamps de chaque etape de cuisine.
+
+**Fichiers cles** :
+- `src/lib/twelve-labs/client.ts` - Configuration du client Twelve Labs
+- `src/lib/twelve-labs/upload-video.ts` - Upload et indexation des videos
+- `src/lib/twelve-labs/analyze-video.ts` - Analyse et extraction des timestamps
+- `src/server/api/routers/recipe.ts` - Router tRPC qui orchestre l'extraction
+
+**Flux d'extraction** :
+1. L'utilisateur colle une URL Instagram
+2. L'API Instagram recupere la video et la description
+3. Claude Sonnet 4 extrait les ingredients et etapes de la description
+4. La video est uploadee sur Twelve Labs et indexee
+5. Twelve Labs analyse la video et identifie les timestamps de chaque etape
+6. Les timestamps sont fusionnes avec les etapes extraites par Claude
+7. Tout est sauvegarde en base de donnees
+
+**Variables d'environnement requises** :
+```env
+TWELVE_LABS_API_KEY=your_api_key
+TWELVE_LABS_INDEX_ID=your_index_id
+```
+
+### Prochaines etapes
+
+**Important** : La feature de timestamping video est fonctionnelle mais necessite encore du travail :
+
+1. **Optimisation des couts** :
+   - Actuellement, chaque video est uploadee et analysee meme si la recette existe deja
+   - Ajouter un systeme de cache des videoId par sourceUrl pour eviter les re-uploads
+   - Considerer un TTL pour les videos dans l'index Twelve Labs
+
+2. **Amelioration de la precision** :
+   - Tester differents prompts pour l'analyse video
+   - Ajouter des exemples (few-shot learning) dans le prompt
+   - Valider la coherence des timestamps retournes
+
+3. **Generation des clips video** :
+   - Utiliser les timestamps pour decouper la video en clips individuels
+   - Stocker les clips (Cloudflare R2, S3, ou Vercel Blob)
+   - Mettre a jour le schema DB avec les URLs des clips
+
+4. **Gestion des erreurs** :
+   - Actuellement, si Twelve Labs echoue, on continue sans timestamps
+   - Ajouter un systeme de retry avec backoff exponentiel
+   - Logger les erreurs pour monitoring
+
+5. **Interface utilisateur** :
+   - Afficher un indicateur de progression pendant l'upload/analyse (peut prendre 30-60s)
+   - Montrer un apercu des timestamps extraits avant sauvegarde
+   - Permettre l'edition manuelle des timestamps si necessaire
 
 ## Deployment
 
@@ -247,6 +311,8 @@ users
 - `BETTER_AUTH_URL` → Votre domaine
 - `POLAR_SERVER` → `"production"`
 - `POLAR_SUCCESS_URL` → URL production
+- `TWELVE_LABS_API_KEY` → Cle API Twelve Labs
+- `TWELVE_LABS_INDEX_ID` → ID de l'index Twelve Labs (creer un index dans le dashboard)
 
 ## Resources
 
