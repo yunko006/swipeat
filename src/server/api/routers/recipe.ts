@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { recipes } from "@/server/db/schema";
 import { getRecipeBySourceUrl } from "@/server/db/queries/recipes";
+import { extractRecipeFromDescription } from "@/lib/ai/extract-recipe";
 
 const saveRecipeInput = z.object({
 	sourceUrl: z.string().url(),
@@ -64,5 +65,63 @@ export const recipeRouter = createTRPCRouter({
 		.input(z.object({ sourceUrl: z.string().url() }))
 		.query(async ({ input }) => {
 			return await getRecipeBySourceUrl(input.sourceUrl);
+		}),
+
+	extractAndSave: protectedProcedure
+		.input(
+			z.object({
+				sourceUrl: z.string().url(),
+				sourcePlatform: z.enum(["tiktok", "instagram", "youtube"]),
+				description: z.string().min(1),
+				imageUrl: z.string().url().optional(),
+				videoUrl: z.string().url().optional(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const existingRecipe = await getRecipeBySourceUrl(input.sourceUrl);
+
+			if (existingRecipe) {
+				return {
+					success: true,
+					recipeId: existingRecipe.id,
+					isNew: false,
+					extracted: {
+						ingredients: existingRecipe.ingredients,
+						steps: existingRecipe.steps,
+						prepTimeMinutes: existingRecipe.prepTimeMinutes,
+						cookTimeMinutes: existingRecipe.cookTimeMinutes,
+						servings: existingRecipe.servings,
+					},
+				};
+			}
+
+			const extracted = await extractRecipeFromDescription(input.description);
+
+			const title = input.description.split("\n")[0] || "Sans titre";
+
+			const [newRecipe] = await ctx.db
+				.insert(recipes)
+				.values({
+					sourceUrl: input.sourceUrl,
+					sourcePlatform: input.sourcePlatform,
+					title: title.substring(0, 200),
+					description: input.description,
+					imageUrl: input.imageUrl,
+					ingredients: extracted.ingredients,
+					steps: extracted.steps,
+					prepTimeMinutes: extracted.prepTimeMinutes,
+					cookTimeMinutes: extracted.cookTimeMinutes,
+					servings: extracted.servings,
+					extractionModel: "claude-3-5-sonnet-20241022",
+					createdByUserId: ctx.session.user.id,
+				})
+				.returning();
+
+			return {
+				success: true,
+				recipeId: newRecipe!.id,
+				isNew: true,
+				extracted,
+			};
 		}),
 });
