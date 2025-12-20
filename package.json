@@ -19,6 +19,7 @@
     "ngrok": "ngrok http 3000 --domain=formally-warm-liger.ngrok-free.app"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^2.0.56",
     "@auth/drizzle-adapter": "^1.7.2",
     "@polar-sh/better-auth": "^1.6.0",
     "@polar-sh/nextjs": "^0.9.1",
@@ -31,6 +32,7 @@
     "@trpc/client": "^11.0.0",
     "@trpc/react-query": "^11.0.0",
     "@trpc/server": "^11.0.0",
+    "ai": "^5.0.116",
     "better-auth": "^1.4.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -47,6 +49,7 @@
     "server-only": "^0.0.1",
     "superjson": "^2.2.1",
     "tailwind-merge": "^3.4.0",
+    "twelvelabs-js": "^1.1.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
