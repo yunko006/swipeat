@@ -2,26 +2,41 @@
 
 import { Heart, Clock, Users, Play } from "lucide-react";
 import Link from "next/link";
-import type { Recipe } from "@/lib/recipes-data";
 
 interface RecipeCardProps {
-  recipe: Recipe;
+  recipe: {
+    id: string;
+    title: string;
+    imageUrl: string | null;
+    prepTimeMinutes: number | null;
+    cookTimeMinutes: number | null;
+    servings: number | null;
+    sourcePlatform: "tiktok" | "instagram" | "youtube";
+    createdBy: {
+      name: string | null;
+      image: string | null;
+    } | null;
+  };
 }
 
 export function RecipeCard({ recipe }: RecipeCardProps) {
+  const totalTime =
+    (recipe.prepTimeMinutes ?? 0) + (recipe.cookTimeMinutes ?? 0);
+  const displayTime = totalTime > 0 ? `${totalTime} min` : "Temps non spécifié";
+
   return (
-    <Link href={`/recette?id=${recipe.id}`}>
+    <Link href={`/recette/${recipe.id}`}>
       <div className="group relative bg-card border border-border rounded-2xl overflow-hidden hover:border-foreground/30 transition-all cursor-pointer">
         {/* Thumbnail avec overlay */}
-        <div className="relative aspect-[3/4] overflow-hidden">
+        <div className="relative aspect-3/4 overflow-hidden">
           <img
-            src={recipe.thumbnail || "/placeholder.svg"}
+            src={recipe.imageUrl || "/placeholder.svg"}
             alt={recipe.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
 
           {/* Overlay gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
 
           {/* Play button overlay */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -30,25 +45,21 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
             </div>
           </div>
 
-          {/* Category badge */}
+          {/* Platform badge */}
           <div className="absolute top-3 left-3">
-            <span className="px-2 py-1 text-xs font-medium bg-black/40 backdrop-blur-sm rounded-full text-white border border-white/20">
-              {recipe.category}
-            </span>
-          </div>
-
-          {/* Likes */}
-          <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 bg-black/40 backdrop-blur-sm rounded-full">
-            <Heart className="w-3 h-3 text-rose-400 fill-rose-400" />
-            <span className="text-xs text-white">
-              {recipe.likes?.toLocaleString()}
+            <span className="px-2 py-1 text-xs font-medium bg-black/40 backdrop-blur-sm rounded-full text-white border border-white/20 capitalize">
+              {recipe.sourcePlatform}
             </span>
           </div>
 
           {/* Content overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
             {/* Author */}
-            <p className="text-xs text-white/70 mb-1">{recipe.author}</p>
+            {recipe.createdBy?.name && (
+              <p className="text-xs text-white/70 mb-1">
+                {recipe.createdBy.name}
+              </p>
+            )}
 
             {/* Title */}
             <h3 className="text-lg font-semibold text-white leading-tight mb-2 line-clamp-2">
@@ -59,18 +70,20 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
             <div className="flex items-center gap-3 text-xs text-white/70">
               <div className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                <span>{recipe.prepTime}</span>
+                <span>{displayTime}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Users className="w-3 h-3" />
-                <span>{recipe.servings} pers.</span>
-              </div>
+              {recipe.servings && (
+                <div className="flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  <span>{recipe.servings} pers.</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Ligne style carnet en bas */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500/50 via-transparent to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-linear-to-r from-rose-500/50 via-transparent to-transparent" />
       </div>
     </Link>
   );
