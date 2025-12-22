@@ -231,9 +231,7 @@ users
 
 ### Decoupage video
 
-- [ ] Solution ? (FFmpeg, service tiers, API specialisee)
-- [ ] Stocker clips decoupes ou timestamps uniquement ?
-- [ ] Hebergement videos ? (S3, Cloudflare R2, Vercel Blob)
+Voir la documentation detaillee : [Architecture video](/docs/video/architecture)
 
 ### Extraction contenu social media
 
