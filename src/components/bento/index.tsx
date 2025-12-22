@@ -1,50 +1,73 @@
 "use client";
 
 import { useState } from "react";
-import { ChefHat } from "lucide-react";
-import { recipes } from "@/lib/recipes-data";
 import { BentoIngredients } from "./bento-ingredients";
 import { BentoRecette } from "./bento-recette";
 import { BentoSourceVideo } from "./bento-sourcevideo";
 import { BentoLetmecook } from "./bento-letmecook";
 
 interface RecipeBentoProps {
-  recipeId?: number;
+	recipe: {
+		id: string;
+		title: string;
+		sourcePlatform: "tiktok" | "instagram" | "youtube";
+		sourceUrl: string;
+		videoUrl: string | null;
+		imageUrl: string | null;
+		prepTimeMinutes: number | null;
+		cookTimeMinutes: number | null;
+		servings: number | null;
+		ingredients: Array<{
+			name: string;
+			quantity?: string;
+			unit?: string;
+			notes?: string;
+		}>;
+		steps: Array<{
+			order: number;
+			instruction: string;
+			durationMinutes?: number;
+			videoStartTime?: number;
+			videoEndTime?: number;
+			videoClipUrl?: string;
+		}>;
+	};
 }
 
-export function RecipeBento({ recipeId }: RecipeBentoProps) {
-  const [showVideo, setShowVideo] = useState(false);
-  const recipe = recipeId
-    ? recipes.find((r) => r.id === recipeId) || recipes[0]
-    : recipes[0];
+export function RecipeBento({ recipe }: RecipeBentoProps) {
+	const [showVideo, setShowVideo] = useState(false);
 
-  return (
-    <div className="max-w-6xl mx-auto py-8 px-4 pt-20">
-      {/* Grille Bento */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-        {/* Colonne gauche */}
-        <div className="md:col-span-8 flex flex-col gap-4">
-          <BentoIngredients recipe={recipe} />
-          <BentoRecette
-            recipe={recipe}
-            onPlayClick={() => setShowVideo(true)}
-          />
-        </div>
+	return (
+		<div className="max-w-6xl mx-auto py-8 px-4 pt-20">
+			{/* Grille Bento */}
+			<div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+				{/* Colonne gauche */}
+				<div className="md:col-span-8 flex flex-col gap-4">
+					<BentoIngredients recipe={recipe} />
+					<BentoRecette recipe={recipe} onPlayClick={() => setShowVideo(true)} />
+				</div>
 
-        {/* Colonne droite - Video */}
-        <div className="md:col-span-4 md:row-span-2">
-          <BentoSourceVideo onPlayClick={() => setShowVideo(true)} />
-        </div>
-      </div>
+				{/* Colonne droite - Video */}
+				<div className="md:col-span-4 md:row-span-2">
+					<BentoSourceVideo
+						onPlayClick={() => setShowVideo(true)}
+						thumbnailUrl={recipe.imageUrl ?? undefined}
+						videoUrl={recipe.videoUrl ?? undefined}
+						sourceUrl={recipe.sourceUrl}
+						sourcePlatform={recipe.sourcePlatform}
+					/>
+				</div>
+			</div>
 
-      {/* Player Instagram-like */}
-      <BentoLetmecook
-        recipe={recipe}
-        isOpen={showVideo}
-        onClose={() => setShowVideo(false)}
-      />
-    </div>
-  );
+			{/* Player Instagram-like */}
+			<BentoLetmecook
+				recipe={recipe}
+				isOpen={showVideo}
+				onClose={() => setShowVideo(false)}
+				videoUrl={recipe.videoUrl ?? undefined}
+			/>
+		</div>
+	);
 }
 
 export { BentoIngredients } from "./bento-ingredients";

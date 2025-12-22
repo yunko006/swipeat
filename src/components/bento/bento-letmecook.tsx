@@ -9,14 +9,20 @@ import {
   ChevronRight,
   Pause,
 } from "lucide-react";
-import type { Recipe } from "@/lib/recipes-data";
 
 interface BentoLetmecookProps {
-  recipe: Recipe;
+  recipe: {
+    title: string;
+    steps: Array<{
+      order: number;
+      instruction: string;
+      videoStartTime?: number;
+      videoEndTime?: number;
+    }>;
+  };
   isOpen: boolean;
   onClose: () => void;
   videoUrl?: string;
-  stepTimestamps?: number[];
 }
 
 export function BentoLetmecook({
@@ -24,7 +30,6 @@ export function BentoLetmecook({
   isOpen,
   onClose,
   videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-  stepTimestamps = [0, 8, 18, 28, 38, 48],
 }: BentoLetmecookProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -37,14 +42,15 @@ export function BentoLetmecook({
 
   const goToStep = useCallback(
     (step: number) => {
-      if (step >= 0 && step < recipe.instructions.length) {
+      if (step >= 0 && step < recipe.steps.length) {
         setCurrentStep(step);
-        if (videoRef.current && stepTimestamps[step] !== undefined) {
-          videoRef.current.currentTime = stepTimestamps[step];
+        const videoStartTime = recipe.steps[step]?.videoStartTime;
+        if (videoRef.current && videoStartTime !== undefined) {
+          videoRef.current.currentTime = videoStartTime;
         }
       }
     },
-    [recipe.instructions.length, stepTimestamps]
+    [recipe.steps]
   );
 
   const togglePlayPause = useCallback(() => {
@@ -64,12 +70,75 @@ export function BentoLetmecook({
     onClose();
   };
 
+  // Combined effect: setup time update listener AND handle video initialization
   useEffect(() => {
-    if (isOpen && videoRef.current) {
-      videoRef.current.play();
-      setIsPlaying(true);
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleTimeUpdate = () => {
+      const currentStepData = recipe.steps[currentStep];
+      if (!currentStepData) return;
+
+      const { videoStartTime, videoEndTime } = currentStepData;
+
+      // console.log(
+      //   "Step:",
+      //   currentStep + 1,
+      //   "| Current time:",
+      //   video.currentTime.toFixed(2),
+      //   "| Start:",
+      //   videoStartTime,
+      //   "| End:",
+      //   videoEndTime
+      // );
+
+      // If we have both start and end times, loop within that range
+      if (videoStartTime !== undefined && videoEndTime !== undefined) {
+        // Use a small buffer (0.1s) to catch the end time before it overshoots
+        if (
+          video.currentTime >= videoEndTime - 0.1 ||
+          video.currentTime < videoStartTime
+        ) {
+          console.log("🔄 Looping back to start:", videoStartTime);
+          video.currentTime = videoStartTime;
+        }
+      }
+    };
+
+    // Attach the timeupdate listener FIRST
+    video.addEventListener("timeupdate", handleTimeUpdate);
+    console.log("✅ timeupdate listener attached for step", currentStep + 1);
+
+    // THEN handle video initialization if modal just opened
+    if (isOpen && currentStep === 0) {
+      const handleLoadedData = () => {
+        const firstStepStartTime = recipe.steps[0]?.videoStartTime ?? 0;
+        console.log(
+          "📹 Video loaded, setting to start time:",
+          firstStepStartTime
+        );
+        video.currentTime = firstStepStartTime;
+
+        // Only play if we have valid step data
+        if (recipe.steps[0]?.videoEndTime !== undefined) {
+          video.play().catch((err) => console.error("Play error:", err));
+          setIsPlaying(true);
+        }
+      };
+
+      // If video is already loaded, start immediately
+      if (video.readyState >= 2) {
+        handleLoadedData();
+      } else {
+        video.addEventListener("loadeddata", handleLoadedData, { once: true });
+      }
     }
-  }, [isOpen]);
+
+    return () => {
+      video.removeEventListener("timeupdate", handleTimeUpdate);
+      console.log("❌ timeupdate listener removed for step", currentStep + 1);
+    };
+  }, [currentStep, recipe.steps, isOpen]);
 
   const handleDragEnd = () => {
     if (!isDragging) return;
@@ -93,7 +162,7 @@ export function BentoLetmecook({
       <div className="relative w-full h-full max-w-lg mx-auto">
         {/* Barre de progression */}
         <div className="absolute top-0 left-0 right-0 z-20 flex gap-1 p-3 pt-4">
-          {recipe.instructions.map((_, i) => (
+          {recipe.steps.map((_, i) => (
             <div
               key={i}
               className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden"
@@ -117,7 +186,7 @@ export function BentoLetmecook({
             <div>
               <p className="text-white text-sm font-medium">{recipe.title}</p>
               <p className="text-white/60 text-xs">
-                Etape {currentStep + 1} sur {recipe.instructions.length}
+                Etape {currentStep + 1} sur {recipe.steps.length}
               </p>
             </div>
           </div>
@@ -136,7 +205,6 @@ export function BentoLetmecook({
           src={videoUrl}
           playsInline
           muted
-          loop
         />
 
         {/* Overlay gradient */}
@@ -159,12 +227,12 @@ export function BentoLetmecook({
           onMouseLeave={handleDragEnd}
           onTouchStart={(e) => {
             setIsDragging(true);
-            setStartX(e.touches[0].clientX);
+            setStartX(e.touches[0]?.clientX ?? 0);
             setDragOffset(0);
           }}
           onTouchMove={(e) => {
             if (!isDragging) return;
-            setDragOffset(e.touches[0].clientX - startX);
+            setDragOffset((e.touches[0]?.clientX ?? 0) - startX);
           }}
           onTouchEnd={handleDragEnd}
         />
@@ -212,7 +280,7 @@ export function BentoLetmecook({
             e.stopPropagation();
             goToStep(currentStep + 1);
           }}
-          disabled={currentStep === recipe.instructions.length - 1}
+          disabled={currentStep === recipe.steps.length - 1}
           className="absolute right-4 bottom-32 z-30 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/30 transition-all"
         >
           <ChevronRight className="w-5 h-5 text-white" />
@@ -224,7 +292,7 @@ export function BentoLetmecook({
 
           <div className="pl-8">
             <p className="text-white text-xl font-medium leading-relaxed">
-              {recipe.instructions[currentStep]}
+              {recipe.steps[currentStep]?.instruction}
             </p>
 
             <div className="flex items-center justify-center gap-8 mt-6 text-white/40 text-xs">
