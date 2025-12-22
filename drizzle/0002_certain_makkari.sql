@@ -1,0 +1,1 @@
+ALTER TABLE "swipeat_recipes" ADD COLUMN "video_url" text;
