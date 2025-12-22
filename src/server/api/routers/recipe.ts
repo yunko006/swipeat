@@ -36,6 +36,7 @@ export const recipeRouter = createTRPCRouter({
 				.values({
 					sourceUrl: input.sourceUrl,
 					sourcePlatform: input.sourcePlatform,
+					videoUrl: input.videoUrl,
 					title: input.title,
 					description: input.description,
 					imageUrl: input.imageUrl,
@@ -129,6 +130,7 @@ export const recipeRouter = createTRPCRouter({
 				.values({
 					sourceUrl: input.sourceUrl,
 					sourcePlatform: input.sourcePlatform,
+					videoUrl: input.videoUrl,
 					title: title.substring(0, 200),
 					description: input.description,
 					imageUrl: input.imageUrl,

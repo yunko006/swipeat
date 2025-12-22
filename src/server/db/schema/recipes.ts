@@ -19,6 +19,7 @@ export const recipes = swipeatTable("recipes", {
 	id: uuid("id").primaryKey().defaultRandom(),
 	sourceUrl: text("source_url").notNull().unique(),
 	sourcePlatform: sourcePlatformEnum("source_platform").notNull(),
+	videoUrl: text("video_url"),
 	title: text("title").notNull(),
 	description: text("description"),
 	imageUrl: text("image_url"),
