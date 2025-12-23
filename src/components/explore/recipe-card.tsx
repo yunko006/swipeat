@@ -2,6 +2,8 @@
 
 import { Heart, Clock, Users, Play } from "lucide-react";
 import Link from "next/link";
+import { api } from "@/trpc/react";
+import { useState, useEffect } from "react";
 
 interface RecipeCardProps {
   recipe: {
@@ -23,6 +25,32 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
   const totalTime =
     (recipe.prepTimeMinutes ?? 0) + (recipe.cookTimeMinutes ?? 0);
   const displayTime = totalTime > 0 ? `${totalTime} min` : "Temps non spécifié";
+
+  const { data: savedData } = api.savedRecipes.isSaved.useQuery({
+    recipeId: recipe.id,
+  });
+  const [isSaved, setIsSaved] = useState(savedData?.saved ?? false);
+
+  useEffect(() => {
+    if (savedData) {
+      setIsSaved(savedData.saved);
+    }
+  }, [savedData]);
+
+  const toggleSave = api.savedRecipes.toggle.useMutation({
+    onMutate: () => {
+      setIsSaved((prev) => !prev);
+    },
+    onError: () => {
+      setIsSaved((prev) => !prev);
+    },
+  });
+
+  const handleSaveClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleSave.mutate({ recipeId: recipe.id });
+  };
 
   return (
     <Link href={`/recette/${recipe.id}`}>
@@ -51,6 +79,21 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
               {recipe.sourcePlatform}
             </span>
           </div>
+
+          {/* Save button */}
+          <button
+            onClick={handleSaveClick}
+            className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/20 hover:bg-black/60 transition-colors z-10"
+            aria-label={isSaved ? "Retirer des favoris" : "Ajouter aux favoris"}
+          >
+            <Heart
+              className={`w-4 h-4 transition-all ${
+                isSaved
+                  ? "fill-rose-500 text-rose-500"
+                  : "text-white"
+              }`}
+            />
+          </button>
 
           {/* Content overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
