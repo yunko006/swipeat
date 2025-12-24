@@ -154,4 +154,13 @@ export const recipeRouter = createTRPCRouter({
 				},
 			};
 		}),
+
+	getUserImportedRecipes: protectedProcedure.query(async ({ ctx }) => {
+		const importedRecipes = await ctx.db.query.recipes.findMany({
+			where: (recipes, { eq }) => eq(recipes.createdByUserId, ctx.session.user.id),
+			orderBy: (recipes, { desc }) => [desc(recipes.createdAt)],
+		});
+
+		return importedRecipes;
+	}),
 });

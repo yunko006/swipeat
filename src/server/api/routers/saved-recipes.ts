@@ -47,4 +47,18 @@ export const savedRecipesRouter = createTRPCRouter({
 
 			return { saved: !!saved };
 		}),
+
+	getUserSavedRecipes: protectedProcedure.query(async ({ ctx }) => {
+		const savedRecipes = await ctx.db.query.userSavedRecipes.findMany({
+			where: eq(userSavedRecipes.userId, ctx.session.user.id),
+			with: {
+				recipe: true,
+			},
+			orderBy: (userSavedRecipes, { desc }) => [
+				desc(userSavedRecipes.savedAt),
+			],
+		});
+
+		return savedRecipes.map((sr) => sr.recipe);
+	}),
 });
