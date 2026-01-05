@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { env } from "@/env";
 import type { InstagramResponse, InstagramError } from "@/types/instagram";
+import { parseInstagramUrlExpiration } from "@/lib/instagram/parse-expiration";
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,14 +33,19 @@ export async function POST(request: NextRequest) {
     // La réponse est un tableau, on prend le premier élément
     const item = data[0];
 
+    const videoUrl = item?.urls?.[0]?.url;
+    const thumbnailUrl = item?.pictureUrl;
+
     // Extraire uniquement les champs nécessaires
     const result: InstagramResponse = {
       username: item?.meta?.username,
       sourceUrl: item?.meta?.sourceUrl,
-      videoUrl: item?.urls?.[0]?.url,
+      videoUrl: videoUrl,
+      videoUrlExpiresAt: videoUrl ? parseInstagramUrlExpiration(videoUrl) : null,
       extension: item?.urls?.[0]?.extension,
       description: item?.meta?.title,
-      thumbnail: item?.pictureUrl,
+      thumbnail: thumbnailUrl,
+      thumbnailExpiresAt: thumbnailUrl ? parseInstagramUrlExpiration(thumbnailUrl) : null,
     };
 
     return NextResponse.json<InstagramResponse>(result);
