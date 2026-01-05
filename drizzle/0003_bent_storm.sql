@@ -1,0 +1,2 @@
+ALTER TABLE "swipeat_recipes" ADD COLUMN "video_url_expires_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "swipeat_recipes" ADD COLUMN "image_url_expires_at" timestamp with time zone;
