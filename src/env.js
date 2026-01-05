@@ -23,6 +23,7 @@ export const env = createEnv({
     ANTHROPIC_API_KEY: z.string().min(1),
     TWELVE_LABS_API_KEY: z.string().min(1),
     TWELVE_LABS_INDEX_ID: z.string().min(1),
+    CRON_SECRET: z.string().optional(),
   },
 
   /**
@@ -50,6 +51,7 @@ export const env = createEnv({
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     TWELVE_LABS_API_KEY: process.env.TWELVE_LABS_API_KEY,
     TWELVE_LABS_INDEX_ID: process.env.TWELVE_LABS_INDEX_ID,
+    CRON_SECRET: process.env.CRON_SECRET,
     NEXT_PUBLIC_BETTER_AUTH_URL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
   },
   /**
