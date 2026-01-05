@@ -7,9 +7,15 @@ import { RecipeCard } from "./recipe-card";
 interface Recipe {
   id: string;
   title: string;
-  imageUrl?: string | null;
-  videoUrl?: string | null;
-  totalTime?: number | null;
+  imageUrl: string | null;
+  prepTimeMinutes: number | null;
+  cookTimeMinutes: number | null;
+  servings: number | null;
+  sourcePlatform: "tiktok" | "instagram" | "youtube";
+  createdBy: {
+    name: string | null;
+    image: string | null;
+  } | null;
 }
 
 interface RecipeGridProps {
