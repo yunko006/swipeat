@@ -13,7 +13,9 @@ interface RecipeBentoProps {
 		sourcePlatform: "tiktok" | "instagram" | "youtube";
 		sourceUrl: string;
 		videoUrl: string | null;
+		videoUrlExpiresAt?: Date | null;
 		imageUrl: string | null;
+		imageUrlExpiresAt?: Date | null;
 		prepTimeMinutes: number | null;
 		cookTimeMinutes: number | null;
 		servings: number | null;
@@ -61,7 +63,12 @@ export function RecipeBento({ recipe }: RecipeBentoProps) {
 
 			{/* Player Instagram-like */}
 			<BentoLetmecook
-				recipe={recipe}
+				recipe={{
+					id: recipe.id,
+					title: recipe.title,
+					videoUrlExpiresAt: recipe.videoUrlExpiresAt,
+					steps: recipe.steps,
+				}}
 				isOpen={showVideo}
 				onClose={() => setShowVideo(false)}
 				videoUrl={recipe.videoUrl ?? undefined}

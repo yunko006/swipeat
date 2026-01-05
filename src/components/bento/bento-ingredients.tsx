@@ -123,7 +123,7 @@ export function BentoIngredients({ recipe }: BentoIngredientsProps) {
 															: "text-foreground"
 													}`}
 												>
-													{formatIngredient(recipe.ingredients[i])}
+													{formatIngredient(recipe.ingredients[i]!)}
 												</span>
 											</div>
 										);
