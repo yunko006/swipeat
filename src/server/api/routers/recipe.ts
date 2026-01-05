@@ -14,7 +14,9 @@ const saveRecipeInput = z.object({
 	title: z.string().min(1),
 	description: z.string().optional(),
 	imageUrl: z.string().url().optional(),
+	imageUrlExpiresAt: z.date().optional(),
 	videoUrl: z.string().url().optional(),
+	videoUrlExpiresAt: z.date().optional(),
 });
 
 export const recipeRouter = createTRPCRouter({
@@ -37,9 +39,11 @@ export const recipeRouter = createTRPCRouter({
 					sourceUrl: input.sourceUrl,
 					sourcePlatform: input.sourcePlatform,
 					videoUrl: input.videoUrl,
+					videoUrlExpiresAt: input.videoUrlExpiresAt,
 					title: input.title,
 					description: input.description,
 					imageUrl: input.imageUrl,
+					imageUrlExpiresAt: input.imageUrlExpiresAt,
 					ingredients: [],
 					steps: [],
 					createdByUserId: ctx.session.user.id,
@@ -76,7 +80,9 @@ export const recipeRouter = createTRPCRouter({
 				sourcePlatform: z.enum(["tiktok", "instagram", "youtube"]),
 				description: z.string().min(1),
 				imageUrl: z.string().url().optional(),
+				imageUrlExpiresAt: z.date().optional(),
 				videoUrl: z.string().url().optional(),
+				videoUrlExpiresAt: z.date().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -131,9 +137,11 @@ export const recipeRouter = createTRPCRouter({
 					sourceUrl: input.sourceUrl,
 					sourcePlatform: input.sourcePlatform,
 					videoUrl: input.videoUrl,
+					videoUrlExpiresAt: input.videoUrlExpiresAt,
 					title: title.substring(0, 200),
 					description: input.description,
 					imageUrl: input.imageUrl,
+					imageUrlExpiresAt: input.imageUrlExpiresAt,
 					ingredients: extracted.ingredients,
 					steps: stepsWithTimestamps,
 					prepTimeMinutes: extracted.prepTimeMinutes,

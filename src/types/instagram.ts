@@ -3,9 +3,11 @@ export interface InstagramResponse {
   username: string;
   sourceUrl: string;
   videoUrl: string;
+  videoUrlExpiresAt: Date | null;
   extension: string;
   description: string;
   thumbnail: string;
+  thumbnailExpiresAt: Date | null;
 }
 
 export interface InstagramError {

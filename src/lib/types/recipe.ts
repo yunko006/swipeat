@@ -5,12 +5,14 @@ export interface Recipe {
   id: string;
   title: string;
   imageUrl: string | null;
+  imageUrlExpiresAt: Date | null;
   prepTimeMinutes: number | null;
   cookTimeMinutes: number | null;
   servings: number | null;
   sourcePlatform: "tiktok" | "instagram" | "youtube";
   description: string | null;
   videoUrl: string | null;
+  videoUrlExpiresAt: Date | null;
   sourceUrl: string;
   ingredients: Array<{
     name: string;

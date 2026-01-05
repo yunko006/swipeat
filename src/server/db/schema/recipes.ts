@@ -20,9 +20,11 @@ export const recipes = swipeatTable("recipes", {
 	sourceUrl: text("source_url").notNull().unique(),
 	sourcePlatform: sourcePlatformEnum("source_platform").notNull(),
 	videoUrl: text("video_url"),
+	videoUrlExpiresAt: timestamp("video_url_expires_at", { withTimezone: true }),
 	title: text("title").notNull(),
 	description: text("description"),
 	imageUrl: text("image_url"),
+	imageUrlExpiresAt: timestamp("image_url_expires_at", { withTimezone: true }),
 	ingredients: jsonb("ingredients").notNull().$type<
 		Array<{
 			name: string;
