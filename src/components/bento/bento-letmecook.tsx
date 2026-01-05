@@ -12,7 +12,9 @@ import {
 
 interface BentoLetmecookProps {
   recipe: {
+    id: string;
     title: string;
+    videoUrlExpiresAt?: Date | null;
     steps: Array<{
       order: number;
       instruction: string;
@@ -23,6 +25,7 @@ interface BentoLetmecookProps {
   isOpen: boolean;
   onClose: () => void;
   videoUrl?: string;
+  onUrlRefreshed?: (newVideoUrl: string) => void;
 }
 
 export function BentoLetmecook({
@@ -30,12 +33,15 @@ export function BentoLetmecook({
   isOpen,
   onClose,
   videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+  onUrlRefreshed,
 }: BentoLetmecookProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
+  const [isRefreshingUrl, setIsRefreshingUrl] = useState(false);
+  const [refreshedVideoUrl, setRefreshedVideoUrl] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -69,6 +75,48 @@ export function BentoLetmecook({
     setIsPlaying(true);
     onClose();
   };
+
+  // Check if URL is expired or will expire soon, and refresh if needed
+  useEffect(() => {
+    if (!isOpen || !recipe.videoUrlExpiresAt) return;
+
+    const checkAndRefreshUrl = async () => {
+      const expiresAt = new Date(recipe.videoUrlExpiresAt!);
+      const now = new Date();
+      const oneHour = 60 * 60 * 1000;
+
+      // If URL expires in less than 1 hour, refresh it
+      if (expiresAt.getTime() - now.getTime() < oneHour) {
+        console.log("⏰ Video URL expiring soon, refreshing...");
+        setIsRefreshingUrl(true);
+
+        try {
+          const response = await fetch("/api/instagram/refresh", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ recipeId: recipe.id }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log("✅ URL refreshed successfully");
+            setRefreshedVideoUrl(data.videoUrl);
+            if (onUrlRefreshed) {
+              onUrlRefreshed(data.videoUrl);
+            }
+          } else {
+            console.error("❌ Failed to refresh URL");
+          }
+        } catch (error) {
+          console.error("❌ Error refreshing URL:", error);
+        } finally {
+          setIsRefreshingUrl(false);
+        }
+      }
+    };
+
+    checkAndRefreshUrl();
+  }, [isOpen, recipe.id, recipe.videoUrlExpiresAt, onUrlRefreshed]);
 
   // Combined effect: setup time update listener AND handle video initialization
   useEffect(() => {
@@ -202,13 +250,30 @@ export function BentoLetmecook({
         <video
           ref={videoRef}
           className="absolute inset-0 w-full h-full object-cover"
-          src={videoUrl}
+          src={refreshedVideoUrl || videoUrl}
           playsInline
           muted
         />
 
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-linear-to-b from-black/60 via-transparent to-black/80 pointer-events-none" />
+
+        {/* Refreshing overlay */}
+        {isRefreshingUrl && (
+          <div className="absolute inset-0 z-30 bg-black/80 flex items-center justify-center">
+            <div className="text-center px-6">
+              <div className="mb-4 flex justify-center">
+                <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+              </div>
+              <p className="text-white text-lg font-medium mb-2">
+                Préparation de la vidéo...
+              </p>
+              <p className="text-white/60 text-sm">
+                On rafraîchit les ingrédients pour toi
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Zone de swipe */}
         <div
