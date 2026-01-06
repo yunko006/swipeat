@@ -22,11 +22,10 @@ function extractShortcode(instagramUrl: string): string | null {
 }
 
 export async function GET(request: NextRequest) {
-  // Verify this is a legitimate cron request (optional, add auth header check)
+  // Verify this is a legitimate Vercel cron request
   const authHeader = request.headers.get("authorization");
+  const cronSecret = env.CRON_SECRET;
 
-  // Simple auth check - you should set CRON_SECRET in your .env
-  const cronSecret = env.CRON_SECRET ?? null;
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json(
       { error: "Unauthorized" },
