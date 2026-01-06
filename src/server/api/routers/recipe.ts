@@ -14,9 +14,9 @@ const saveRecipeInput = z.object({
 	title: z.string().min(1),
 	description: z.string().optional(),
 	imageUrl: z.string().url().optional(),
-	imageUrlExpiresAt: z.date().optional(),
+	imageUrlExpiresAt: z.coerce.date().optional(),
 	videoUrl: z.string().url().optional(),
-	videoUrlExpiresAt: z.date().optional(),
+	videoUrlExpiresAt: z.coerce.date().optional(),
 });
 
 export const recipeRouter = createTRPCRouter({
@@ -80,9 +80,9 @@ export const recipeRouter = createTRPCRouter({
 				sourcePlatform: z.enum(["tiktok", "instagram", "youtube"]),
 				description: z.string().min(1),
 				imageUrl: z.string().url().optional(),
-				imageUrlExpiresAt: z.date().optional(),
+				imageUrlExpiresAt: z.coerce.date().optional(),
 				videoUrl: z.string().url().optional(),
-				videoUrlExpiresAt: z.date().optional(),
+				videoUrlExpiresAt: z.coerce.date().optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
