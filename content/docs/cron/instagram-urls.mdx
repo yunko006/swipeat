@@ -1,0 +1,109 @@
+---
+title: Refresh des URLs Instagram
+description: Système automatique pour maintenir les URLs CDN Instagram à jour
+---
+
+## Le problème
+
+Les URLs des vidéos et images Instagram CDN expirent après un certain temps. Sans refresh, les recettes Instagram deviennent inutilisables car les vidéos ne se chargent plus.
+
+## La solution
+
+Swipeat utilise **deux systèmes complémentaires** pour garantir que les URLs sont toujours valides:
+
+### 1. Cron job automatique (proactif)
+
+Un cron job Vercel s'exécute **toutes les 12 heures** et refresh automatiquement toutes les URLs qui vont expirer dans les prochaines 24 heures.
+
+**Fichier de configuration:** `vercel.json`
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron/refresh-expiring-urls",
+      "schedule": "0 */12 * * *"
+    }
+  ]
+}
+```
+
+**Comment ça marche:**
+1. Le cron cherche toutes les recettes Instagram dont les URLs expirent bientôt
+2. Pour chaque recette, il appelle l'API Instagram pour obtenir de nouvelles URLs
+3. Il met à jour la base de données avec les nouvelles URLs et leurs dates d'expiration
+4. Un délai de 500ms entre chaque refresh évite le rate limiting
+
+**Endpoint:** `GET /api/cron/refresh-expiring-urls`
+
+### 2. Refresh à la demande (réactif)
+
+Si une URL expire entre deux exécutions du cron (rare), le composant `BentoLetmecook` détecte automatiquement l'expiration et refresh l'URL avant d'afficher la vidéo.
+
+**Comment ça marche:**
+1. Quand l'utilisateur ouvre une recette, le composant vérifie la date d'expiration
+2. Si l'URL expire dans moins d'1 heure, un refresh automatique est déclenché
+3. Un overlay de chargement s'affiche pendant le refresh
+4. L'utilisateur peut ensuite regarder la vidéo normalement
+
+**Endpoint:** `POST /api/instagram/refresh`
+```json
+{
+  "recipeId": "uuid-de-la-recette"
+}
+```
+
+## Configuration Vercel
+
+### 1. Ajouter le secret cron
+
+Dans ton dashboard Vercel:
+1. Va dans **Settings** → **Environment Variables**
+2. Ajoute `CRON_SECRET` avec une valeur aléatoire sécurisée
+3. Pour générer un secret: `openssl rand -base64 32`
+
+### 2. Déployer
+
+Une fois déployé, Vercel va automatiquement:
+- Configurer le cron job selon `vercel.json`
+- Ajouter le header `Authorization: Bearer <CRON_SECRET>` lors des appels cron
+- Exécuter le cron toutes les 12 heures
+
+### 3. Monitoring
+
+Les logs sont disponibles dans:
+- **Deployments** → **Functions** → **Logs**
+
+Tu verras:
+- 🔄 Début du cron job
+- Nombre de recettes trouvées
+- ✅ Recettes refreshées avec succès
+- ❌ Erreurs éventuelles
+
+## Dates d'expiration
+
+Les dates d'expiration sont stockées dans la base de données:
+
+```typescript
+// Schema recipes table
+videoUrlExpiresAt: timestamp("video_url_expires_at", { withTimezone: true })
+imageUrlExpiresAt: timestamp("image_url_expires_at", { withTimezone: true })
+```
+
+Elles sont automatiquement parsées depuis le paramètre `oe=` des URLs Instagram (timestamp hexadécimal).
+
+## Tests
+
+### Tester le cron endpoint localement
+
+```bash
+curl -X GET http://localhost:3000/api/cron/refresh-expiring-urls \
+  -H "Authorization: Bearer TON_CRON_SECRET"
+```
+
+### Tester le refresh manuel
+
+```bash
+curl -X POST http://localhost:3000/api/instagram/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"recipeId":"uuid-de-ta-recette"}'
+```

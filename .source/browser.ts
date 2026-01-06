@@ -7,6 +7,6 @@ const create = browser<typeof Config, import("fumadocs-mdx/runtime/types").Inter
   }
 }>();
 const browserCollections = {
-  docs: create.doc("docs", {"hello.md": () => import("../content/docs/hello.md?collection=docs"), "ia/ai-extraction-examples.md": () => import("../content/docs/ia/ai-extraction-examples.md?collection=docs"), "ia/twelve-labs-integration.md": () => import("../content/docs/ia/twelve-labs-integration.md?collection=docs"), "video/architecture.md": () => import("../content/docs/video/architecture.md?collection=docs"), "video/bandwidth.md": () => import("../content/docs/video/bandwidth.md?collection=docs"), }),
+  docs: create.doc("docs", {"hello.md": () => import("../content/docs/hello.md?collection=docs"), "cron/instagram-urls.mdx": () => import("../content/docs/cron/instagram-urls.mdx?collection=docs"), "ia/ai-extraction-examples.md": () => import("../content/docs/ia/ai-extraction-examples.md?collection=docs"), "ia/twelve-labs-integration.md": () => import("../content/docs/ia/twelve-labs-integration.md?collection=docs"), "video/architecture.md": () => import("../content/docs/video/architecture.md?collection=docs"), "video/bandwidth.md": () => import("../content/docs/video/bandwidth.md?collection=docs"), }),
 };
 export default browserCollections;
