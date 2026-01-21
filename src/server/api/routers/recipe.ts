@@ -2,6 +2,8 @@
 // ABOUTME: Handles recipe CRUD operations
 
 import { z } from "zod";
+import { eq } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { recipes } from "@/server/db/schema";
 import { getRecipeBySourceUrl } from "@/server/db/queries/recipes";
@@ -171,4 +173,47 @@ export const recipeRouter = createTRPCRouter({
 
 		return importedRecipes;
 	}),
+
+	updateStepTimings: protectedProcedure
+		.input(
+			z.object({
+				recipeId: z.string().uuid(),
+				steps: z.array(
+					z.object({
+						order: z.number(),
+						instruction: z.string(),
+						durationMinutes: z.number().optional(),
+						videoStartTime: z.number().optional(),
+						videoEndTime: z.number().optional(),
+						videoClipUrl: z.string().optional(),
+					}),
+				),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const recipe = await ctx.db.query.recipes.findFirst({
+				where: (recipes, { eq }) => eq(recipes.id, input.recipeId),
+			});
+
+			if (!recipe) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Recipe not found",
+				});
+			}
+
+			if (recipe.createdByUserId !== ctx.session.user.id) {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "You can only edit your own recipes",
+				});
+			}
+
+			await ctx.db
+				.update(recipes)
+				.set({ steps: input.steps })
+				.where(eq(recipes.id, input.recipeId));
+
+			return { success: true };
+		}),
 });

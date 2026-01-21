@@ -26,6 +26,7 @@ interface BentoLetmecookProps {
   onClose: () => void;
   videoUrl?: string;
   onUrlRefreshed?: (newVideoUrl: string) => void;
+  initialStep?: number;
 }
 
 export function BentoLetmecook({
@@ -34,8 +35,9 @@ export function BentoLetmecook({
   onClose,
   videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
   onUrlRefreshed,
+  initialStep = 0,
 }: BentoLetmecookProps) {
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -45,6 +47,13 @@ export function BentoLetmecook({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Sync currentStep with initialStep when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStep(initialStep);
+    }
+  }, [isOpen, initialStep]);
 
   const goToStep = useCallback(
     (step: number) => {
@@ -158,17 +167,17 @@ export function BentoLetmecook({
     console.log("✅ timeupdate listener attached for step", currentStep + 1);
 
     // THEN handle video initialization if modal just opened
-    if (isOpen && currentStep === 0) {
+    if (isOpen) {
       const handleLoadedData = () => {
-        const firstStepStartTime = recipe.steps[0]?.videoStartTime ?? 0;
+        const stepStartTime = recipe.steps[currentStep]?.videoStartTime ?? 0;
         console.log(
           "📹 Video loaded, setting to start time:",
-          firstStepStartTime
+          stepStartTime
         );
-        video.currentTime = firstStepStartTime;
+        video.currentTime = stepStartTime;
 
         // Only play if we have valid step data
-        if (recipe.steps[0]?.videoEndTime !== undefined) {
+        if (recipe.steps[currentStep]?.videoEndTime !== undefined) {
           video.play().catch((err) => console.error("Play error:", err));
           setIsPlaying(true);
         }

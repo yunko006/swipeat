@@ -38,6 +38,12 @@ interface RecipeBentoProps {
 
 export function RecipeBento({ recipe }: RecipeBentoProps) {
 	const [showVideo, setShowVideo] = useState(false);
+	const [initialStep, setInitialStep] = useState(0);
+
+	const openVideoAtStep = (stepIndex: number) => {
+		setInitialStep(stepIndex);
+		setShowVideo(true);
+	};
 
 	return (
 		<div className="max-w-6xl mx-auto py-8 px-4 pt-20">
@@ -46,13 +52,13 @@ export function RecipeBento({ recipe }: RecipeBentoProps) {
 				{/* Colonne gauche */}
 				<div className="md:col-span-8 flex flex-col gap-4">
 					<BentoIngredients recipe={recipe} />
-					<BentoRecette recipe={recipe} onPlayClick={() => setShowVideo(true)} />
+					<BentoRecette recipe={recipe} onPlayClick={() => openVideoAtStep(0)} onStepClick={openVideoAtStep} />
 				</div>
 
 				{/* Colonne droite - Video */}
 				<div className="md:col-span-4 md:row-span-2">
 					<BentoSourceVideo
-						onPlayClick={() => setShowVideo(true)}
+						onPlayClick={() => openVideoAtStep(0)}
 						thumbnailUrl={recipe.imageUrl ?? undefined}
 						videoUrl={recipe.videoUrl ?? undefined}
 						sourceUrl={recipe.sourceUrl}
@@ -72,6 +78,7 @@ export function RecipeBento({ recipe }: RecipeBentoProps) {
 				isOpen={showVideo}
 				onClose={() => setShowVideo(false)}
 				videoUrl={recipe.videoUrl ?? undefined}
+				initialStep={initialStep}
 			/>
 		</div>
 	);
