@@ -4,30 +4,26 @@
 import { twelveLabsClient } from "./client";
 import type { RecipeExtraction } from "@/lib/ai/schemas";
 import { uploadVideoToTwelveLabs } from "./upload-video";
+import { buildPrompt, type TwelveLabsPromptType } from "./prompts";
 
 interface StepTimestamp {
 	step: number;
-	startSeconds: number;
-	endSeconds: number;
+	startSeconds: number | null;
+	endSeconds: number | null;
+	confidence?: number;
 }
 
 export async function analyzeRecipeVideo(
 	videoUrl: string,
 	extractedRecipe: RecipeExtraction,
+	promptType: TwelveLabsPromptType = "basic",
 ): Promise<StepTimestamp[]> {
 	// Upload video to Twelve Labs and get videoId
 	const videoId = await uploadVideoToTwelveLabs(videoUrl);
 
 	// Build the prompt from extracted recipe steps
-	const stepsPrompt = extractedRecipe.steps
-		.map((step, index) => `${index + 1}. ${step.instruction}`)
-		.join("\n");
-
-	const fullPrompt = `Identify the start time and end time (in seconds) for each cooking step in this video:
-
-${stepsPrompt}
-
-Return as JSON: [{ "step": 1, "startSeconds": X, "endSeconds": Y }, ...]`;
+	const steps = extractedRecipe.steps.map((step) => step.instruction);
+	const fullPrompt = buildPrompt(promptType, steps);
 
 	// Use Twelve Labs Analyze API
 	const result = await twelveLabsClient.analyze({
@@ -44,8 +40,17 @@ Return as JSON: [{ "step": 1, "startSeconds": X, "endSeconds": Y }, ...]`;
 	}
 
 	// Parse the JSON response from result.data
+	// Twelve Labs may return JSON wrapped in markdown code blocks or with extra text
 	try {
-		const timestamps: StepTimestamp[] = JSON.parse(result.data);
+		let jsonString = result.data;
+
+		// Try to extract JSON array from the response if it's wrapped in text
+		const jsonMatch = jsonString.match(/\[[\s\S]*\]/);
+		if (jsonMatch) {
+			jsonString = jsonMatch[0];
+		}
+
+		const timestamps: StepTimestamp[] = JSON.parse(jsonString);
 		return timestamps;
 	} catch (error) {
 		console.error("Failed to parse Twelve Labs response:", result.data);
