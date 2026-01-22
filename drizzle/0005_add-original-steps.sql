@@ -1,0 +1,1 @@
+ALTER TABLE "swipeat_recipes" ADD COLUMN "original_steps" jsonb;
