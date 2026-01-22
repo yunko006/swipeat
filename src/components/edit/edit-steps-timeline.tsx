@@ -3,7 +3,7 @@
 
 "use client";
 
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, Pin } from "lucide-react";
 import { type Step, getStepColor, formatTimecode } from "./types";
 
 interface EditStepsTimelineProps {
@@ -68,15 +68,19 @@ export function EditStepsTimeline({
 				<div className="flex gap-2 ml-auto">
 					<button
 						onClick={onSetCurrentTimeAsStart}
-						className="px-3 py-1.5 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm"
+						title="Cliquer pour définir le début de l'étape à la position actuelle"
+						className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm"
 					>
-						Debut = {formatTimecode(currentTime)}
+						<Pin className="w-3.5 h-3.5" />
+						Définir début ({formatTimecode(currentTime)})
 					</button>
 					<button
 						onClick={onSetCurrentTimeAsEnd}
-						className="px-3 py-1.5 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm"
+						title="Cliquer pour définir la fin de l'étape à la position actuelle"
+						className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm"
 					>
-						Fin = {formatTimecode(currentTime)}
+						<Pin className="w-3.5 h-3.5" />
+						Définir fin ({formatTimecode(currentTime)})
 					</button>
 				</div>
 			</div>
@@ -120,7 +124,9 @@ export function EditStepsTimeline({
 								</div>
 
 								<div
-									className="flex-1 h-5 bg-foreground/10 rounded cursor-pointer relative"
+									className={`flex-1 bg-foreground/10 rounded cursor-pointer relative transition-all duration-200 ${
+										isSelected ? "h-10" : "h-5"
+									}`}
 									onClick={(e) => {
 										e.stopPropagation();
 										handleTimelineClick(e);
@@ -140,7 +146,9 @@ export function EditStepsTimeline({
 									{/* Start marker */}
 									{step.videoStartTime !== undefined && (
 										<div
-											className={`absolute top-1/2 w-3 h-3 rounded-full ${color.bg} ${color.border} border-2 z-10`}
+											className={`absolute top-1/2 rounded-full ${color.bg} ${color.border} border-2 z-10 transition-all duration-200 ${
+												isSelected ? "w-4 h-4" : "w-3 h-3"
+											}`}
 											style={{
 												left: `${(step.videoStartTime / videoDuration) * 100}%`,
 												transform: "translate(-50%, -50%)",
@@ -151,7 +159,9 @@ export function EditStepsTimeline({
 									{/* End marker */}
 									{step.videoEndTime !== undefined && (
 										<div
-											className={`absolute top-1/2 w-2 h-2 rounded-sm ${color.bg} ${color.border} border z-10`}
+											className={`absolute top-1/2 rounded-sm ${color.bg} ${color.border} border z-10 transition-all duration-200 ${
+												isSelected ? "w-3 h-3" : "w-2 h-2"
+											}`}
 											style={{
 												left: `${(step.videoEndTime / videoDuration) * 100}%`,
 												transform: "translate(-50%, -50%)",
