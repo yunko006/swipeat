@@ -6,7 +6,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, RotateCcw } from "lucide-react";
 import { api } from "@/trpc/react";
 import {
 	EditVideoPlayer,
@@ -19,12 +19,15 @@ export default function EditRecipePage() {
 	const router = useRouter();
 	const recipeId = params.id as string;
 
+	const utils = api.useUtils();
+
 	const { data: recipe, isLoading } = api.recipe.getById.useQuery({
 		id: recipeId,
 	});
 
 	const updateTimings = api.recipe.updateStepTimings.useMutation({
-		onSuccess: () => {
+		onSuccess: async () => {
+			await utils.recipe.getById.invalidate({ id: recipeId });
 			router.push(`/recette/${recipeId}`);
 		},
 	});
@@ -90,6 +93,15 @@ export default function EditRecipePage() {
 		updateStepTiming(selectedStep, "videoEndTime", Math.floor(currentTime));
 	}, [selectedStep, currentTime, updateStepTiming]);
 
+	const resetToOriginal = useCallback(() => {
+		if (recipe?.originalSteps) {
+			// Deep copy to avoid reference issues
+			setSteps(JSON.parse(JSON.stringify(recipe.originalSteps)));
+		}
+	}, [recipe?.originalSteps]);
+
+	const hasOriginalSteps = !!recipe?.originalSteps;
+
 	const handleSave = () => {
 		updateTimings.mutate({
 			recipeId,
@@ -129,14 +141,25 @@ export default function EditRecipePage() {
 						<ArrowLeft className="w-4 h-4" />
 						Retour
 					</Link>
-					<button
-						onClick={handleSave}
-						disabled={updateTimings.isPending}
-						className="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-colors disabled:opacity-50"
-					>
-						<Save className="w-4 h-4" />
-						{updateTimings.isPending ? "Sauvegarde..." : "Sauvegarder"}
-					</button>
+					<div className="flex items-center gap-2">
+						{hasOriginalSteps && (
+							<button
+								onClick={resetToOriginal}
+								className="inline-flex items-center gap-2 px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors"
+							>
+								<RotateCcw className="w-4 h-4" />
+								Reset aux originaux
+							</button>
+						)}
+						<button
+							onClick={handleSave}
+							disabled={updateTimings.isPending}
+							className="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-colors disabled:opacity-50"
+						>
+							<Save className="w-4 h-4" />
+							{updateTimings.isPending ? "Sauvegarde..." : "Sauvegarder"}
+						</button>
+					</div>
 				</div>
 
 				<h1 className="text-2xl font-bold mb-6">Editer les timings</h1>
