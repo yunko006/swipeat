@@ -43,6 +43,16 @@ export const recipes = swipeatTable("recipes", {
 			videoClipUrl?: string;
 		}>
 	>(),
+	originalSteps: jsonb("original_steps").$type<
+		Array<{
+			order: number;
+			instruction: string;
+			durationMinutes?: number;
+			videoStartTime?: number;
+			videoEndTime?: number;
+			videoClipUrl?: string;
+		}>
+	>(),
 	prepTimeMinutes: integer("prep_time_minutes"),
 	cookTimeMinutes: integer("cook_time_minutes"),
 	servings: integer("servings"),
