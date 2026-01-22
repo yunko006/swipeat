@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import type { InstagramResponse, InstagramError } from "@/types/instagram";
 import { api } from "@/trpc/react";
+import { TWELVE_LABS_PROMPT_OPTIONS, type TwelveLabsPromptType } from "@/lib/twelve-labs/prompts";
 
 const extractShortcode = (instagramUrl: string) => {
   // Exemples d'URLs Instagram:
@@ -32,6 +33,7 @@ const fetchInstagram = async (shortcode: string): Promise<InstagramResponse> => 
 
 export default function InstagramTestPage() {
   const [url, setUrl] = useState("");
+  const [promptType, setPromptType] = useState<TwelveLabsPromptType>("basic");
 
   const mutation = useMutation({
     mutationFn: fetchInstagram,
@@ -68,6 +70,7 @@ export default function InstagramTestPage() {
       imageUrlExpiresAt: mutation.data.thumbnailExpiresAt ?? undefined,
       videoUrl: mutation.data.videoUrl,
       videoUrlExpiresAt: mutation.data.videoUrlExpiresAt ?? undefined,
+      twelveLabsPromptType: promptType,
     });
   };
 
@@ -99,6 +102,25 @@ export default function InstagramTestPage() {
             <pre className="p-4 bg-gray-100 text-black rounded overflow-auto text-xs">
               {JSON.stringify(mutation.data, null, 2)}
             </pre>
+
+            <div className="flex gap-2 items-center">
+              <label htmlFor="prompt-type" className="text-sm font-medium whitespace-nowrap">
+                Twelve Labs Prompt:
+              </label>
+              <select
+                id="prompt-type"
+                value={promptType}
+                onChange={(e) => setPromptType(e.target.value as TwelveLabsPromptType)}
+                className="flex-1 h-10 px-3 rounded-md border border-input bg-background text-sm"
+                disabled={extractAndSave.isPending}
+              >
+                {TWELVE_LABS_PROMPT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value} disabled={option.disabled}>
+                    {option.label} - {option.description}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <Button
               onClick={handleExtractAndSave}
