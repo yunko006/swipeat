@@ -85,6 +85,7 @@ export const recipeRouter = createTRPCRouter({
 				imageUrlExpiresAt: z.coerce.date().optional(),
 				videoUrl: z.string().url().optional(),
 				videoUrlExpiresAt: z.coerce.date().optional(),
+				twelveLabsPromptType: z.enum(["basic", "advanced", "custom"]).default("basic"),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -114,6 +115,7 @@ export const recipeRouter = createTRPCRouter({
 					const timestamps = await analyzeRecipeVideo(
 						input.videoUrl,
 						extracted,
+						input.twelveLabsPromptType,
 					);
 
 					// Merge timestamps into steps
