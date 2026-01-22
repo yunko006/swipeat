@@ -146,6 +146,7 @@ export const recipeRouter = createTRPCRouter({
 					imageUrlExpiresAt: input.imageUrlExpiresAt,
 					ingredients: extracted.ingredients,
 					steps: stepsWithTimestamps,
+					originalSteps: stepsWithTimestamps,
 					prepTimeMinutes: extracted.prepTimeMinutes,
 					cookTimeMinutes: extracted.cookTimeMinutes,
 					servings: extracted.servings,
