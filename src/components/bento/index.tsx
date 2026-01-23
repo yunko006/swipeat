@@ -46,17 +46,21 @@ export function RecipeBento({ recipe }: RecipeBentoProps) {
 	};
 
 	return (
-		<div className="max-w-6xl mx-auto py-8 px-4 pt-20">
-			{/* Grille Bento */}
-			<div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-				{/* Colonne gauche */}
-				<div className="md:col-span-8 flex flex-col gap-4">
+		<div className="h-[calc(100vh-5rem)] px-4 pt-20 pb-4">
+			{/* Grille Bento - 3 colonnes, hauteurs égales */}
+			<div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-full">
+				{/* Colonne gauche - Ingrédients */}
+				<div className="md:col-span-3 h-full overflow-hidden">
 					<BentoIngredients recipe={recipe} />
+				</div>
+
+				{/* Colonne milieu - Recette (plus importante) */}
+				<div className="md:col-span-6 h-full overflow-hidden">
 					<BentoRecette recipe={recipe} onPlayClick={() => openVideoAtStep(0)} onStepClick={openVideoAtStep} />
 				</div>
 
-				{/* Colonne droite - Video */}
-				<div className="md:col-span-4 md:row-span-2">
+				{/* Colonne droite - Vidéo (plus petite) */}
+				<div className="md:col-span-3 h-full">
 					<BentoSourceVideo
 						onPlayClick={() => openVideoAtStep(0)}
 						thumbnailUrl={recipe.imageUrl ?? undefined}

@@ -36,7 +36,7 @@ export function BentoSourceVideo({
 	};
 
 	return (
-		<div className="group relative bg-card border border-border rounded-2xl overflow-hidden hover:border-foreground/20 transition-all h-full min-h-[500px]">
+		<div className="group relative bg-card border border-border rounded-2xl overflow-hidden hover:border-foreground/20 transition-all h-full">
 			{/* Marge rouge */}
 			<div className="absolute left-6 top-0 bottom-0 w-px bg-rose-500/30 z-10" />
 
