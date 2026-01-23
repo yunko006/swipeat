@@ -219,4 +219,73 @@ export const recipeRouter = createTRPCRouter({
 
 			return { success: true };
 		}),
+
+	reanalyzeTimings: protectedProcedure
+		.input(
+			z.object({
+				recipeId: z.string().uuid(),
+				promptType: z.enum(["basic", "advanced", "custom"]).default("advanced"),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const recipe = await ctx.db.query.recipes.findFirst({
+				where: (recipes, { eq }) => eq(recipes.id, input.recipeId),
+			});
+
+			if (!recipe) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Recipe not found",
+				});
+			}
+
+			if (recipe.createdByUserId !== ctx.session.user.id) {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "You can only edit your own recipes",
+				});
+			}
+
+			if (!recipe.videoUrl) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: "Recipe has no video URL",
+				});
+			}
+
+			const steps = recipe.steps as Array<{
+				order: number;
+				instruction: string;
+				durationMinutes?: number;
+			}>;
+
+			const extractedRecipe = {
+				ingredients: [],
+				steps: steps.map((s) => ({
+					order: s.order,
+					instruction: s.instruction,
+					durationMinutes: s.durationMinutes,
+				})),
+			};
+
+			const timestamps = await analyzeRecipeVideo(
+				recipe.videoUrl,
+				extractedRecipe,
+				input.promptType,
+			);
+
+			const newSteps = steps.map((step) => {
+				const timestamp = timestamps.find((t) => t.step === step.order);
+				return {
+					...step,
+					videoStartTime: timestamp?.startSeconds ?? undefined,
+					videoEndTime: timestamp?.endSeconds ?? undefined,
+				};
+			});
+
+			return {
+				success: true,
+				newSteps,
+			};
+		}),
 });
