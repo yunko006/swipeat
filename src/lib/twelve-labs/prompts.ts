@@ -69,15 +69,7 @@ TIMESTAMP RULES:
 - Do NOT invent actions that are not visually supported
 
 Actions to detect:
-1. Boil the pork spare ribs from cold water in a large pot
-2. Skim the scum and rinse off any impurities from the ribs
-3. Bring the ribs to a low boil again and add salt and shaoxing cooking wine
-4. Add aromatics (green onion, ginger, bay leaf, star anise)
-5. Continue cooking for about 20 minutes
-6. Add daikon, carrots, and shiitake mushrooms
-7. Cook until vegetables are soft and meat is very tender
-8. Strain out the broth, then put the vegetables and meat back in
-9. Serve hot
+${stepsPrompt}
 
 Return the result as JSON using this schema:
 
