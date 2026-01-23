@@ -6,13 +6,25 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, RotateCcw } from "lucide-react";
+import { ArrowLeft, Save, RotateCcw, RefreshCw, ChevronDown } from "lucide-react";
 import { api } from "@/trpc/react";
 import {
 	EditVideoPlayer,
 	EditStepsTimeline,
+	CompareTimingsModal,
 	type Step,
 } from "@/components/edit";
+import { AnalysisProgressModal } from "@/components/analysis-progress-modal";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+	TWELVE_LABS_PROMPT_OPTIONS,
+	type TwelveLabsPromptType,
+} from "@/lib/twelve-labs/prompts";
 
 export default function EditRecipePage() {
 	const params = useParams();
@@ -32,7 +44,13 @@ export default function EditRecipePage() {
 		},
 	});
 
+	const reanalyzeTimings = api.recipe.reanalyzeTimings.useMutation();
+
 	const [steps, setSteps] = useState<Step[]>([]);
+	const [showCompareModal, setShowCompareModal] = useState(false);
+	const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+	const [analysisError, setAnalysisError] = useState<string | null>(null);
+	const [newTimings, setNewTimings] = useState<Step[] | null>(null);
 	const [selectedStep, setSelectedStep] = useState(0);
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [videoDuration, setVideoDuration] = useState(0);
@@ -102,6 +120,42 @@ export default function EditRecipePage() {
 
 	const hasOriginalSteps = !!recipe?.originalSteps;
 
+	const handleReanalyze = async (promptType: TwelveLabsPromptType) => {
+		setShowAnalysisModal(true);
+		setAnalysisError(null);
+
+		try {
+			const result = await reanalyzeTimings.mutateAsync({
+				recipeId,
+				promptType,
+			});
+
+			setShowAnalysisModal(false);
+
+			if (result.newSteps) {
+				setNewTimings(result.newSteps as Step[]);
+				setShowCompareModal(true);
+			}
+		} catch (error) {
+			setAnalysisError(
+				error instanceof Error ? error.message : "Une erreur est survenue",
+			);
+		}
+	};
+
+	const applyNewTimings = () => {
+		if (newTimings) {
+			setSteps(newTimings);
+			setShowCompareModal(false);
+			setNewTimings(null);
+		}
+	};
+
+	const cancelNewTimings = () => {
+		setShowCompareModal(false);
+		setNewTimings(null);
+	};
+
 	const handleSave = () => {
 		updateTimings.mutate({
 			recipeId,
@@ -142,6 +196,33 @@ export default function EditRecipePage() {
 						Retour
 					</Link>
 					<div className="flex items-center gap-2">
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<button
+									disabled={reanalyzeTimings.isPending}
+									className="inline-flex items-center gap-2 px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
+								>
+									<RefreshCw className={`w-4 h-4 ${reanalyzeTimings.isPending ? "animate-spin" : ""}`} />
+									{reanalyzeTimings.isPending ? "Analyse..." : "Re-analyser"}
+									<ChevronDown className="w-4 h-4" />
+								</button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end">
+								{TWELVE_LABS_PROMPT_OPTIONS.filter((opt) => !opt.disabled).map((option) => (
+									<DropdownMenuItem
+										key={option.value}
+										onClick={() => handleReanalyze(option.value)}
+									>
+										<div className="flex flex-col">
+											<span className="font-medium">{option.label}</span>
+											<span className="text-xs text-muted-foreground">
+												{option.description}
+											</span>
+										</div>
+									</DropdownMenuItem>
+								))}
+							</DropdownMenuContent>
+						</DropdownMenu>
 						{hasOriginalSteps && (
 							<button
 								onClick={resetToOriginal}
@@ -196,6 +277,21 @@ export default function EditRecipePage() {
 					</div>
 				</div>
 			</div>
+
+			{showCompareModal && newTimings && (
+				<CompareTimingsModal
+					currentSteps={steps}
+					newSteps={newTimings}
+					onApply={applyNewTimings}
+					onCancel={cancelNewTimings}
+				/>
+			)}
+
+			<AnalysisProgressModal
+				isOpen={showAnalysisModal}
+				isComplete={!reanalyzeTimings.isPending && showAnalysisModal && !analysisError}
+				error={analysisError}
+			/>
 		</main>
 	);
 }
