@@ -184,70 +184,76 @@ export default function EditRecipePage() {
 	}
 
 	return (
-		<main className="min-h-screen bg-background theme-vercel-dark py-8">
-			<div className="max-w-7xl mx-auto px-4 pt-12">
+		<main className="min-h-screen bg-background theme-vercel-dark py-4 lg:py-8">
+			<div className="max-w-7xl mx-auto px-2 lg:px-4 pt-8 lg:pt-12">
 				{/* Header */}
-				<div className="flex items-center justify-between mb-8">
+				<div className="flex items-center justify-between mb-4 lg:mb-8">
 					<Link
 						href={`/recette/${recipeId}`}
 						className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
 					>
 						<ArrowLeft className="w-4 h-4" />
-						Retour
+						<span className="hidden sm:inline">Retour</span>
 					</Link>
 					<div className="flex items-center gap-2">
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<button
-									disabled={reanalyzeTimings.isPending}
-									className="inline-flex items-center gap-2 px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
-								>
-									<RefreshCw className={`w-4 h-4 ${reanalyzeTimings.isPending ? "animate-spin" : ""}`} />
-									{reanalyzeTimings.isPending ? "Analyse..." : "Re-analyser"}
-									<ChevronDown className="w-4 h-4" />
-								</button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end">
-								{TWELVE_LABS_PROMPT_OPTIONS.filter((opt) => !opt.disabled).map((option) => (
-									<DropdownMenuItem
-										key={option.value}
-										onClick={() => handleReanalyze(option.value)}
+						{/* Desktop-only buttons */}
+						<div className="hidden lg:flex items-center gap-2">
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<button
+										disabled={reanalyzeTimings.isPending}
+										className="inline-flex items-center gap-2 px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors disabled:opacity-50"
 									>
-										<div className="flex flex-col">
-											<span className="font-medium">{option.label}</span>
-											<span className="text-xs text-muted-foreground">
-												{option.description}
-											</span>
-										</div>
-									</DropdownMenuItem>
-								))}
-							</DropdownMenuContent>
-						</DropdownMenu>
-						{hasOriginalSteps && (
-							<button
-								onClick={resetToOriginal}
-								className="inline-flex items-center gap-2 px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors"
-							>
-								<RotateCcw className="w-4 h-4" />
-								Reset aux originaux
-							</button>
-						)}
+										<RefreshCw className={`w-4 h-4 ${reanalyzeTimings.isPending ? "animate-spin" : ""}`} />
+										{reanalyzeTimings.isPending ? "Analyse..." : "Re-analyser"}
+										<ChevronDown className="w-4 h-4" />
+									</button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end">
+									{TWELVE_LABS_PROMPT_OPTIONS.filter((opt) => !opt.disabled).map((option) => (
+										<DropdownMenuItem
+											key={option.value}
+											onClick={() => handleReanalyze(option.value)}
+										>
+											<div className="flex flex-col">
+												<span className="font-medium">{option.label}</span>
+												<span className="text-xs text-muted-foreground">
+													{option.description}
+												</span>
+											</div>
+										</DropdownMenuItem>
+									))}
+								</DropdownMenuContent>
+							</DropdownMenu>
+							{hasOriginalSteps && (
+								<button
+									onClick={resetToOriginal}
+									className="inline-flex items-center gap-2 px-4 py-2 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors"
+								>
+									<RotateCcw className="w-4 h-4" />
+									Reset aux originaux
+								</button>
+							)}
+						</div>
+						{/* Save button - always visible */}
 						<button
 							onClick={handleSave}
 							disabled={updateTimings.isPending}
-							className="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-colors disabled:opacity-50"
+							className="inline-flex items-center gap-2 px-3 py-2 lg:px-4 bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-colors disabled:opacity-50"
 						>
 							<Save className="w-4 h-4" />
-							{updateTimings.isPending ? "Sauvegarde..." : "Sauvegarder"}
+							<span className="hidden sm:inline">
+								{updateTimings.isPending ? "Sauvegarde..." : "Sauvegarder"}
+							</span>
 						</button>
 					</div>
 				</div>
 
-				<h1 className="text-2xl font-bold mb-6">Editer les timings</h1>
+				<h1 className="hidden lg:block text-2xl font-bold mb-6">Editer les timings</h1>
 
-				{/* Two-column layout */}
-				<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-					{/* Left column - Unified steps and timeline */}
+				{/* Two-column layout - video first on mobile */}
+				<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+					{/* Steps and timeline - order-2 on mobile, order-1 on desktop */}
 					<EditStepsTimeline
 						steps={steps}
 						selectedStep={selectedStep}
@@ -260,9 +266,10 @@ export default function EditRecipePage() {
 						onSetCurrentTimeAsStart={setCurrentTimeAsStart}
 						onSetCurrentTimeAsEnd={setCurrentTimeAsEnd}
 						onTogglePlayPause={togglePlayPause}
+						className="order-2 lg:order-1"
 					/>
 
-					{/* Right column - Video player */}
+					{/* Video player - order-1 on mobile (first), order-2 on desktop */}
 					<div className="order-1 lg:order-2 lg:sticky lg:top-8 lg:self-start">
 						<EditVideoPlayer
 							ref={videoRef}

@@ -1,3 +1,7 @@
+---
+title: Implémentation du Polling pour l'Analyse Vidéo
+---
+
 # Implémentation du Polling pour l'Analyse Vidéo
 
 ## Contexte

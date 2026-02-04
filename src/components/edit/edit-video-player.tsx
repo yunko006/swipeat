@@ -34,7 +34,7 @@ export const EditVideoPlayer = forwardRef<HTMLVideoElement, EditVideoPlayerProps
 				<video
 					ref={ref}
 					src={videoUrl}
-					className="w-full aspect-[9/16] max-h-[52vh] object-contain"
+					className="w-full aspect-[9/16] max-h-[60vh] lg:max-h-[52vh] object-contain"
 					onTimeUpdate={onTimeUpdate}
 					onLoadedMetadata={onLoadedMetadata}
 					onPlay={onPlay}
