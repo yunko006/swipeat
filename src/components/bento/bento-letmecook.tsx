@@ -43,7 +43,9 @@ export function BentoLetmecook({
   const [startX, setStartX] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isRefreshingUrl, setIsRefreshingUrl] = useState(false);
-  const [refreshedVideoUrl, setRefreshedVideoUrl] = useState<string | null>(null);
+  const [refreshedVideoUrl, setRefreshedVideoUrl] = useState<string | null>(
+    null,
+  );
 
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -65,7 +67,7 @@ export function BentoLetmecook({
         }
       }
     },
-    [recipe.steps]
+    [recipe.steps],
   );
 
   const togglePlayPause = useCallback(() => {
@@ -170,10 +172,7 @@ export function BentoLetmecook({
     if (isOpen) {
       const handleLoadedData = () => {
         const stepStartTime = recipe.steps[currentStep]?.videoStartTime ?? 0;
-        console.log(
-          "📹 Video loaded, setting to start time:",
-          stepStartTime
-        );
+        console.log("📹 Video loaded, setting to start time:", stepStartTime);
         video.currentTime = stepStartTime;
 
         // Only play if we have valid step data
@@ -321,7 +320,7 @@ export function BentoLetmecook({
         </div>
 
         {/* Bouton precedent */}
-        <button
+        {/* <button
           onClick={(e) => {
             e.stopPropagation();
             goToStep(currentStep - 1);
@@ -330,7 +329,7 @@ export function BentoLetmecook({
           className="absolute left-4 bottom-32 z-30 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/30 transition-all"
         >
           <ChevronLeft className="w-5 h-5 text-white" />
-        </button>
+        </button> */}
 
         {/* Bouton play/pause avec "let me cook" */}
         <button
@@ -349,7 +348,7 @@ export function BentoLetmecook({
         </button>
 
         {/* Bouton suivant */}
-        <button
+        {/* <button
           onClick={(e) => {
             e.stopPropagation();
             goToStep(currentStep + 1);
@@ -358,7 +357,7 @@ export function BentoLetmecook({
           className="absolute right-4 bottom-32 z-30 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/30 transition-all"
         >
           <ChevronRight className="w-5 h-5 text-white" />
-        </button>
+        </button> */}
 
         {/* Instruction courante */}
         <div className="absolute bottom-0 left-0 right-0 z-20 p-6 pb-12 pointer-events-none">
@@ -369,9 +368,9 @@ export function BentoLetmecook({
               {recipe.steps[currentStep]?.instruction}
             </p>
 
-            <div className="flex items-center justify-center gap-8 mt-6 text-white/40 text-xs">
+            {/* <div className="flex items-center justify-center gap-8 mt-6 text-white/40 text-xs">
               <span>Swipe ou fleches pour naviguer</span>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
