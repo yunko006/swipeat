@@ -8,6 +8,7 @@ interface Recipe {
   id: string;
   title: string;
   imageUrl: string | null;
+  videoUrl: string | null;
   prepTimeMinutes: number | null;
   cookTimeMinutes: number | null;
   servings: number | null;

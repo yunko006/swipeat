@@ -10,6 +10,7 @@ interface RecipeCardProps {
     id: string;
     title: string;
     imageUrl: string | null;
+    videoUrl: string | null;
     prepTimeMinutes: number | null;
     cookTimeMinutes: number | null;
     servings: number | null;
@@ -57,9 +58,8 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
       <div className="group relative bg-card border border-border rounded-2xl overflow-hidden hover:border-foreground/30 transition-all cursor-pointer">
         {/* Thumbnail avec overlay */}
         <div className="relative aspect-3/4 overflow-hidden">
-          <img
-            src={recipe.imageUrl || "/placeholder.svg"}
-            alt={recipe.title}
+          <video
+            src={recipe.videoUrl || "/placeholder.svg"}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
 
@@ -88,9 +88,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
           >
             <Heart
               className={`w-4 h-4 transition-all ${
-                isSaved
-                  ? "fill-rose-500 text-rose-500"
-                  : "text-white"
+                isSaved ? "fill-rose-500 text-rose-500" : "text-white"
               }`}
             />
           </button>
