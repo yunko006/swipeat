@@ -8,6 +8,7 @@ import { createTestRecipe } from "@/test/helpers/recipes";
 import {
 	createAuthenticatedCaller,
 	createUnauthenticatedCaller,
+	createSubscribedCaller,
 } from "@/test/helpers/trpc";
 import { extractRecipeFromDescription } from "@/lib/ai/extract-recipe";
 import { analyzeRecipeVideo } from "@/lib/twelve-labs/analyze-video";
@@ -21,8 +22,7 @@ beforeEach(() => {
 
 describe("recipe.save", () => {
 	it("creates a recipe and returns isNew: true", async () => {
-		const user = await createTestUser();
-		const caller = createAuthenticatedCaller(user);
+		const { caller } = await createSubscribedCaller();
 
 		const result = await caller.recipe.save({
 			sourceUrl: "https://instagram.com/reel/NEW123",
@@ -36,11 +36,10 @@ describe("recipe.save", () => {
 	});
 
 	it("returns existing recipe when sourceUrl already exists", async () => {
-		const user = await createTestUser();
-		const existing = await createTestRecipe(user, {
+		const { caller, testUser } = await createSubscribedCaller();
+		const existing = await createTestRecipe(testUser, {
 			sourceUrl: "https://instagram.com/reel/EXISTING",
 		});
-		const caller = createAuthenticatedCaller(user);
 
 		const result = await caller.recipe.save({
 			sourceUrl: "https://instagram.com/reel/EXISTING",
@@ -94,12 +93,11 @@ describe("recipe.getById", () => {
 
 describe("recipe.getBySourceUrl", () => {
 	it("returns recipe by source URL", async () => {
-		const user = await createTestUser();
-		await createTestRecipe(user, {
+		const { caller, testUser } = await createSubscribedCaller();
+		await createTestRecipe(testUser, {
 			sourceUrl: "https://instagram.com/reel/FINDME",
 			title: "Found Recipe",
 		});
-		const caller = createAuthenticatedCaller(user);
 
 		const found = await caller.recipe.getBySourceUrl({
 			sourceUrl: "https://instagram.com/reel/FINDME",
@@ -112,8 +110,7 @@ describe("recipe.getBySourceUrl", () => {
 
 describe("recipe.extractAndSave", () => {
 	it("calls AI extraction and saves recipe with extracted data", async () => {
-		const user = await createTestUser();
-		const caller = createAuthenticatedCaller(user);
+		const { caller } = await createSubscribedCaller();
 
 		mockExtract.mockResolvedValueOnce({
 			ingredients: [{ name: "Flour", quantity: "200", unit: "g" }],
@@ -141,11 +138,10 @@ describe("recipe.extractAndSave", () => {
 	});
 
 	it("returns existing recipe if sourceUrl already exists", async () => {
-		const user = await createTestUser();
-		const existing = await createTestRecipe(user, {
+		const { caller, testUser } = await createSubscribedCaller();
+		const existing = await createTestRecipe(testUser, {
 			sourceUrl: "https://instagram.com/reel/EXISTING2",
 		});
-		const caller = createAuthenticatedCaller(user);
 
 		const result = await caller.recipe.extractAndSave({
 			sourceUrl: "https://instagram.com/reel/EXISTING2",
@@ -160,8 +156,7 @@ describe("recipe.extractAndSave", () => {
 	});
 
 	it("handles video analysis failure gracefully", async () => {
-		const user = await createTestUser();
-		const caller = createAuthenticatedCaller(user);
+		const { caller } = await createSubscribedCaller();
 
 		mockExtract.mockResolvedValueOnce({
 			ingredients: [{ name: "Water" }],
@@ -179,12 +174,11 @@ describe("recipe.extractAndSave", () => {
 		expect(result.success).toBe(true);
 		expect(result.isNew).toBe(true);
 		// Steps should be saved without timestamps
-		expect(result.extracted!.steps[0]!.videoStartTime).toBeUndefined();
+		expect((result.extracted!.steps[0] as any).videoStartTime).toBeUndefined();
 	});
 
 	it("merges Twelve Labs timestamps into steps", async () => {
-		const user = await createTestUser();
-		const caller = createAuthenticatedCaller(user);
+		const { caller } = await createSubscribedCaller();
 
 		mockExtract.mockResolvedValueOnce({
 			ingredients: [{ name: "Pasta" }],
@@ -205,10 +199,10 @@ describe("recipe.extractAndSave", () => {
 			videoUrl: "https://example.com/pasta.mp4",
 		});
 
-		expect(result.extracted!.steps[0]!.videoStartTime).toBe(10);
-		expect(result.extracted!.steps[0]!.videoEndTime).toBe(30);
-		expect(result.extracted!.steps[1]!.videoStartTime).toBe(35);
-		expect(result.extracted!.steps[1]!.videoEndTime).toBe(60);
+		expect((result.extracted!.steps[0] as any).videoStartTime).toBe(10);
+		expect((result.extracted!.steps[0] as any).videoEndTime).toBe(30);
+		expect((result.extracted!.steps[1] as any).videoStartTime).toBe(35);
+		expect((result.extracted!.steps[1] as any).videoEndTime).toBe(60);
 	});
 });
 

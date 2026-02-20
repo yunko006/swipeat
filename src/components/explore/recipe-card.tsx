@@ -1,9 +1,11 @@
 "use client";
 
-import { Clock, Heart, Play, Users } from "lucide-react";
+import { Clock, Heart, Users } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/trpc/react";
+import { useSubscription } from "@/hooks/use-subscription";
 
 interface RecipeCardProps {
   recipe: {
@@ -23,13 +25,17 @@ interface RecipeCardProps {
 }
 
 export function RecipeCard({ recipe }: RecipeCardProps) {
+  const router = useRouter();
+  const { isSubscribed } = useSubscription();
+
   const totalTime =
     (recipe.prepTimeMinutes ?? 0) + (recipe.cookTimeMinutes ?? 0);
   const displayTime = totalTime > 0 ? `${totalTime} min` : "Temps non spécifié";
 
-  const { data: savedData } = api.savedRecipes.isSaved.useQuery({
-    recipeId: recipe.id,
-  });
+  const { data: savedData } = api.savedRecipes.isSaved.useQuery(
+    { recipeId: recipe.id },
+    { enabled: isSubscribed },
+  );
   const [isSaved, setIsSaved] = useState(savedData?.saved ?? false);
 
   useEffect(() => {
@@ -60,6 +66,10 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
   const handleSaveClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!isSubscribed) {
+      router.push("/checkout/swipeat");
+      return;
+    }
     toggleSave.mutate({ recipeId: recipe.id });
   };
 

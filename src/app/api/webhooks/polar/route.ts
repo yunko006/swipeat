@@ -1,13 +1,14 @@
+// ABOUTME: Polar webhook route handler
+// ABOUTME: Receives Polar events and updates user subscription state in DB
+
 import { Webhooks } from "@polar-sh/nextjs";
 import { env } from "@/env";
+import { db } from "@/server/db";
+import { handlePolarPayload } from "./handlers";
 
 export const POST = Webhooks({
   webhookSecret: env.POLAR_WEBHOOK_SECRET,
   onPayload: async (payload) => {
-    // Log ALL webhook events for testing
-    console.log("=== POLAR WEBHOOK RECEIVED ===");
-    console.log("Event type:", payload.type);
-    console.log("Full payload:", JSON.stringify(payload, null, 2));
-    console.log("==============================");
+    await handlePolarPayload(payload, db);
   },
 });

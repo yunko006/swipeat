@@ -2,7 +2,6 @@
 // ABOUTME: Tests recipe browsing, search, sorting, and pagination against real DB
 
 import { describe, it, expect } from "vitest";
-import { TRPCError } from "@trpc/server";
 import { createTestUser } from "@/test/helpers/auth";
 import { createTestRecipe } from "@/test/helpers/recipes";
 import {
@@ -130,9 +129,13 @@ describe("explore.list", () => {
 		expect(result.items[0]!.createdBy!.name).toBe("Chef Thomas");
 	});
 
-	it("requires authentication", async () => {
+	it("is accessible without authentication", async () => {
+		const owner = await createTestUser();
+		await createTestRecipe(owner, { title: "Public Recipe" });
 		const caller = createUnauthenticatedCaller();
 
-		await expect(caller.explore.list({})).rejects.toThrow(TRPCError);
+		const result = await caller.explore.list({});
+
+		expect(result.items.length).toBeGreaterThanOrEqual(1);
 	});
 });

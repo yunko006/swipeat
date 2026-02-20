@@ -10,9 +10,11 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import { eq } from "drizzle-orm";
 
 import { auth } from "@/server/better-auth";
 import { db } from "@/server/db";
+import { user } from "@/server/db/schema";
 
 /**
  * 1. CONTEXT
@@ -128,6 +130,32 @@ export const protectedProcedure = t.procedure
 		return next({
 			ctx: {
 				// infers the `session` as non-nullable
+				session: { ...ctx.session, user: ctx.session.user },
+			},
+		});
+	});
+
+/**
+ * Subscribed procedure
+ *
+ * Only accessible to users with an active Polar subscription.
+ * Reads subscriptionStatus from DB on every call (not available in session).
+ */
+export const subscribedProcedure = t.procedure
+	.use(timingMiddleware)
+	.use(async ({ ctx, next }) => {
+		if (!ctx.session?.user) {
+			throw new TRPCError({ code: "UNAUTHORIZED" });
+		}
+		const [dbUser] = await ctx.db
+			.select({ subscriptionStatus: user.subscriptionStatus })
+			.from(user)
+			.where(eq(user.id, ctx.session.user.id));
+		if (dbUser?.subscriptionStatus !== "active") {
+			throw new TRPCError({ code: "FORBIDDEN", message: "Subscription required" });
+		}
+		return next({
+			ctx: {
 				session: { ...ctx.session, user: ctx.session.user },
 			},
 		});

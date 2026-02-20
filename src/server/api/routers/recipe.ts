@@ -4,7 +4,7 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure, subscribedProcedure } from "@/server/api/trpc";
 import { recipes } from "@/server/db/schema";
 import { getRecipeBySourceUrl } from "@/server/db/queries/recipes";
 import { extractRecipeFromDescription } from "@/lib/ai/extract-recipe";
@@ -22,7 +22,7 @@ const saveRecipeInput = z.object({
 });
 
 export const recipeRouter = createTRPCRouter({
-	save: protectedProcedure
+	save: subscribedProcedure
 		.input(saveRecipeInput)
 		.mutation(async ({ ctx, input }) => {
 			const existingRecipe = await getRecipeBySourceUrl(input.sourceUrl);
@@ -59,7 +59,7 @@ export const recipeRouter = createTRPCRouter({
 			};
 		}),
 
-	getById: protectedProcedure
+	getById: publicProcedure
 		.input(z.object({ id: z.string().uuid() }))
 		.query(async ({ ctx, input }) => {
 			const recipe = await ctx.db.query.recipes.findFirst({
@@ -69,13 +69,13 @@ export const recipeRouter = createTRPCRouter({
 			return recipe ?? null;
 		}),
 
-	getBySourceUrl: protectedProcedure
+	getBySourceUrl: subscribedProcedure
 		.input(z.object({ sourceUrl: z.string().url() }))
 		.query(async ({ input }) => {
 			return await getRecipeBySourceUrl(input.sourceUrl);
 		}),
 
-	extractAndSave: protectedProcedure
+	extractAndSave: subscribedProcedure
 		.input(
 			z.object({
 				sourceUrl: z.string().url(),

@@ -2,19 +2,16 @@
 // ABOUTME: Tests bookmark toggle, check, and listing against real DB
 
 import { describe, it, expect } from "vitest";
-import { TRPCError } from "@trpc/server";
-import { createTestUser } from "@/test/helpers/auth";
 import { createTestRecipe } from "@/test/helpers/recipes";
 import {
-	createAuthenticatedCaller,
 	createUnauthenticatedCaller,
+	createSubscribedCaller,
 } from "@/test/helpers/trpc";
 
 describe("savedRecipes.toggle", () => {
 	it("saves a recipe on first toggle", async () => {
-		const user = await createTestUser();
-		const recipe = await createTestRecipe(user);
-		const caller = createAuthenticatedCaller(user);
+		const { caller, testUser } = await createSubscribedCaller();
+		const recipe = await createTestRecipe(testUser);
 
 		const result = await caller.savedRecipes.toggle({
 			recipeId: recipe.id,
@@ -24,9 +21,8 @@ describe("savedRecipes.toggle", () => {
 	});
 
 	it("unsaves a previously saved recipe on second toggle", async () => {
-		const user = await createTestUser();
-		const recipe = await createTestRecipe(user);
-		const caller = createAuthenticatedCaller(user);
+		const { caller, testUser } = await createSubscribedCaller();
+		const recipe = await createTestRecipe(testUser);
 
 		await caller.savedRecipes.toggle({ recipeId: recipe.id });
 		const result = await caller.savedRecipes.toggle({
@@ -43,15 +39,14 @@ describe("savedRecipes.toggle", () => {
 			caller.savedRecipes.toggle({
 				recipeId: "00000000-0000-0000-0000-000000000000",
 			}),
-		).rejects.toThrow(TRPCError);
+		).rejects.toMatchObject({ code: "UNAUTHORIZED" });
 	});
 });
 
 describe("savedRecipes.isSaved", () => {
 	it("returns true for saved recipe", async () => {
-		const user = await createTestUser();
-		const recipe = await createTestRecipe(user);
-		const caller = createAuthenticatedCaller(user);
+		const { caller, testUser } = await createSubscribedCaller();
+		const recipe = await createTestRecipe(testUser);
 
 		await caller.savedRecipes.toggle({ recipeId: recipe.id });
 		const result = await caller.savedRecipes.isSaved({
@@ -62,9 +57,8 @@ describe("savedRecipes.isSaved", () => {
 	});
 
 	it("returns false for unsaved recipe", async () => {
-		const user = await createTestUser();
-		const recipe = await createTestRecipe(user);
-		const caller = createAuthenticatedCaller(user);
+		const { caller, testUser } = await createSubscribedCaller();
+		const recipe = await createTestRecipe(testUser);
 
 		const result = await caller.savedRecipes.isSaved({
 			recipeId: recipe.id,
@@ -76,11 +70,10 @@ describe("savedRecipes.isSaved", () => {
 
 describe("savedRecipes.getUserSavedRecipes", () => {
 	it("returns saved recipes with recipe data", async () => {
-		const user = await createTestUser();
-		const recipe = await createTestRecipe(user, {
+		const { caller, testUser } = await createSubscribedCaller();
+		const recipe = await createTestRecipe(testUser, {
 			title: "Saved Recipe",
 		});
-		const caller = createAuthenticatedCaller(user);
 
 		await caller.savedRecipes.toggle({ recipeId: recipe.id });
 		const recipes = await caller.savedRecipes.getUserSavedRecipes();
@@ -90,25 +83,22 @@ describe("savedRecipes.getUserSavedRecipes", () => {
 	});
 
 	it("returns empty array when no saved recipes", async () => {
-		const user = await createTestUser();
-		const caller = createAuthenticatedCaller(user);
+		const { caller } = await createSubscribedCaller();
 
 		const recipes = await caller.savedRecipes.getUserSavedRecipes();
 
 		expect(recipes).toEqual([]);
 	});
 
-	it("only returns recipes saved by authenticated user", async () => {
-		const user1 = await createTestUser();
-		const user2 = await createTestUser();
+	it("only returns recipes saved by the requesting user", async () => {
+		const { caller: caller1, testUser: user1 } = await createSubscribedCaller();
+		const { caller: caller2 } = await createSubscribedCaller();
 		const recipe = await createTestRecipe(user1, {
 			title: "User1 Saved",
 		});
 
-		const caller1 = createAuthenticatedCaller(user1);
 		await caller1.savedRecipes.toggle({ recipeId: recipe.id });
 
-		const caller2 = createAuthenticatedCaller(user2);
 		const recipes = await caller2.savedRecipes.getUserSavedRecipes();
 
 		expect(recipes).toEqual([]);

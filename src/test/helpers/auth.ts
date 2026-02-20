@@ -1,6 +1,7 @@
 // ABOUTME: Test authentication helpers
 // ABOUTME: Creates test users and sessions for authenticated tRPC calls
 
+import { eq } from "drizzle-orm";
 import { testDb } from "./db";
 import { user } from "@/server/db/schema";
 import { randomUUID } from "crypto";
@@ -31,6 +32,17 @@ export async function createTestUser(
 	};
 
 	await testDb.insert(user).values(testUser);
+	return testUser;
+}
+
+export async function createSubscribedTestUser(
+	overrides: Partial<TestUser> = {},
+): Promise<TestUser> {
+	const testUser = await createTestUser(overrides);
+	await testDb
+		.update(user)
+		.set({ polarCustomerId: `polar-test-${testUser.id}`, subscriptionStatus: "active" })
+		.where(eq(user.id, testUser.id));
 	return testUser;
 }
 

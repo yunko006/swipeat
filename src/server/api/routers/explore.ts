@@ -2,12 +2,12 @@
 // ABOUTME: Handles recipe browsing, filtering, and pagination
 
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { recipes } from "@/server/db/schema";
 import { desc, asc, ilike, or, sql } from "drizzle-orm";
 
 export const exploreRouter = createTRPCRouter({
-	list: protectedProcedure
+	list: publicProcedure
 		.input(
 			z.object({
 				search: z.string().optional(),
