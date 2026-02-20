@@ -1,40 +1,23 @@
 // ABOUTME: Hook to check user subscription status
-// ABOUTME: Fetches customer state from Polar via Better Auth endpoint
+// ABOUTME: Reads subscription_status from DB via tRPC
 
 "use client";
 
 import { useSession } from "@/lib/auth-client";
-import { useQuery } from "@tanstack/react-query";
-
-interface CustomerState {
-  activeSubscriptions: Array<{ status: string }>;
-}
-
-async function fetchCustomerState(): Promise<CustomerState | null> {
-  const res = await fetch("/api/auth/customer/state");
-  if (!res.ok) return null;
-  return res.json() as Promise<CustomerState>;
-}
+import { api } from "@/trpc/react";
 
 export function useSubscription() {
   const { data: session } = useSession();
   const isLoggedIn = !!session?.user;
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["customer-state"],
-    queryFn: fetchCustomerState,
+  const { data, isLoading } = api.subscription.isActive.useQuery(undefined, {
     enabled: isLoggedIn,
-    staleTime: 30_000, // 30s — acceptable pour éviter trop de requêtes
+    staleTime: 30_000,
   });
-
-  const isSubscribed =
-    isLoggedIn &&
-    (data?.activeSubscriptions?.length ?? 0) > 0 &&
-    data!.activeSubscriptions.some((s) => s.status === "active");
 
   return {
     isLoggedIn,
-    isSubscribed,
+    isSubscribed: data?.isActive ?? false,
     isLoading: isLoggedIn && isLoading,
   };
 }
