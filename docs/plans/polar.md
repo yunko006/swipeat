@@ -137,40 +137,85 @@ export const GET = CustomerPortal({
 
 ### Étape 3 — Webhooks : stocker l'état d'abonnement
 
-**Fichier :** `src/app/api/webhooks/polar/route.ts`
+**Fichiers :** `src/app/api/webhooks/polar/route.ts`, `src/app/api/webhooks/polar/handlers.ts`
 
-Traiter les événements critiques :
+Le webhook handler sépare la logique métier (handlers.ts) de l'entry point (route.ts) pour la testabilité.
 
+**route.ts** — entry point avec vérification HMAC automatique via `@polar-sh/nextjs` :
 ```typescript
 export const POST = Webhooks({
   webhookSecret: env.POLAR_WEBHOOK_SECRET,
   onPayload: async (payload) => {
-    switch (payload.type) {
-      case "customer.created":
-        // externalId = notre user.id, lié par createCustomerOnSignUp dans better-auth config
-        await db.update(user)
-          .set({ polarCustomerId: payload.data.id })
-          .where(eq(user.id, payload.data.externalId));
-        break;
-
-      case "subscription.active":
-        await db.update(user)
-          .set({ subscriptionStatus: "active" })
-          .where(eq(user.polarCustomerId, payload.data.customerId));
-        break;
-
-      case "subscription.canceled":
-      case "subscription.revoked":
-        await db.update(user)
-          .set({ subscriptionStatus: payload.type === "subscription.canceled" ? "canceled" : "revoked" })
-          .where(eq(user.polarCustomerId, payload.data.customerId));
-        break;
-    }
+    await handlePolarPayload(payload, db);
   },
 });
 ```
 
-> **À valider en sandbox** avant de merger : créer un compte et inspecter le payload `customer.created` pour confirmer que `externalId` = notre `user.id`. Le plugin `@polar-sh/better-auth` configure ce lien via `onAfterUserCreate`, mais la valeur exacte du champ doit être vérifiée sur un vrai payload.
+**handlers.ts** — logique métier :
+```typescript
+async function updateSubscriptionStatus(db, status, customerId, customer) {
+  const externalId = customer?.externalId;
+  if (externalId) {
+    // Prioritise externalId (Better Auth user.id) — also stores polarCustomerId if missing
+    await db.update(user)
+      .set({ subscriptionStatus: status, polarCustomerId: customerId })
+      .where(eq(user.id, externalId));
+  } else {
+    await db.update(user)
+      .set({ subscriptionStatus: status })
+      .where(eq(user.polarCustomerId, customerId));
+  }
+}
+
+export async function handlePolarPayload(payload, db) {
+  switch (payload.type) {
+    case "customer.created":
+      await db.update(user)
+        .set({ polarCustomerId: payload.data.id })
+        .where(eq(user.id, payload.data.externalId));
+      break;
+    case "subscription.active":
+      await updateSubscriptionStatus(db, "active", payload.data.customerId, payload.data.customer);
+      break;
+    case "subscription.canceled":
+      await updateSubscriptionStatus(db, "canceled", payload.data.customerId, payload.data.customer);
+      break;
+    case "subscription.revoked":
+      await updateSubscriptionStatus(db, "revoked", payload.data.customerId, payload.data.customer);
+      break;
+  }
+}
+```
+
+#### Piège critique : `customer.created` avec `externalId: null`
+
+**Problème rencontré en production sandbox** : quand un user existant souscrit depuis la page settings (plutôt qu'à l'inscription), Polar envoie `customer.created` avec `external_id: null`. Raison : `@polar-sh/better-auth` crée d'abord le customer sans `externalId` (`onBeforeUserCreate`), puis le met à jour avec `externalId` dans `onAfterUserCreate`. Le webhook `customer.created` arrive entre les deux.
+
+**Conséquence** : `polarCustomerId` n'est jamais stocké en DB → les webhooks `subscription.active/canceled/revoked` ne trouvent pas le user → aucune mise à jour du statut.
+
+**Solution** : dans les webhooks `subscription.*`, utiliser `payload.data.customer.externalId` (Better Auth user.id) comme lookup primaire, et stocker `polarCustomerId` en même temps. Le payload `subscription.active` contient toujours l'objet `customer` complet avec `externalId` rempli, car Better Auth a eu le temps de faire son `customers.update()` avant que l'abonnement soit activé.
+
+#### Product ID : variable d'environnement
+
+Le product ID Polar est réutilisé à plusieurs endroits (config Better Auth, redirects UI). Le stocker dans `NEXT_PUBLIC_POLAR_PRODUCT_ID` (prefixe `NEXT_PUBLIC_` pour qu'il soit accessible côté client sans import de `env`).
+
+Dans `env.js` :
+```js
+client: {
+  NEXT_PUBLIC_POLAR_PRODUCT_ID: z.string().min(1),
+}
+```
+
+Dans les composants client, utiliser directement `process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID` (pas besoin d'importer `env` côté client). Dans la config server-side Better Auth, utiliser `env.NEXT_PUBLIC_POLAR_PRODUCT_ID`.
+
+#### Développement local : ngrok obligatoire
+
+Polar ne peut pas joindre `localhost` pour envoyer les webhooks. En développement :
+1. Lancer ngrok : `ngrok http 3000`
+2. Configurer l'URL webhook dans le dashboard Polar sandbox : `https://<tunnel>.ngrok-free.app/api/webhooks/polar`
+3. Vérifier que le `POLAR_WEBHOOK_SECRET` dans `.env` correspond au secret affiché dans le dashboard Polar
+
+Sans ngrok actif, tous les webhooks arrivent en 404 et la DB n'est jamais mise à jour.
 
 ---
 
