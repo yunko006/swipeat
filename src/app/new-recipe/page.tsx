@@ -60,7 +60,7 @@ export default function NouvelleRecettePage() {
   // Redirect non-subscribed users to checkout
   useEffect(() => {
     if (!subscriptionLoading && !isSubscribed) {
-      router.replace("/checkout/swipeat");
+      router.replace(`/checkout?products=${process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID}`);
     }
   }, [isSubscribed, subscriptionLoading, router]);
 

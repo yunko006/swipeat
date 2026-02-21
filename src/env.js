@@ -33,6 +33,7 @@ export const env = createEnv({
    */
   client: {
     NEXT_PUBLIC_BETTER_AUTH_URL: z.string().url().optional(),
+    NEXT_PUBLIC_POLAR_PRODUCT_ID: z.string().min(1),
   },
 
   /**
@@ -53,6 +54,7 @@ export const env = createEnv({
     TWELVE_LABS_INDEX_ID: process.env.TWELVE_LABS_INDEX_ID,
     CRON_SECRET: process.env.CRON_SECRET,
     NEXT_PUBLIC_BETTER_AUTH_URL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
+    NEXT_PUBLIC_POLAR_PRODUCT_ID: process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

@@ -79,7 +79,7 @@ export default function SettingsPage() {
                 <span className="text-muted-foreground">Aucun abonnement actif</span>
               </div>
               <Link
-                href="/checkout/swipeat"
+                href={`/checkout?products=${process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID}`}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity"
               >
                 S&apos;abonner — 2,99 €/mois

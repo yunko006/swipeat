@@ -67,7 +67,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
     e.preventDefault();
     e.stopPropagation();
     if (!isSubscribed) {
-      router.push("/checkout/swipeat");
+      router.push(`/checkout?products=${process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID}`);
       return;
     }
     toggleSave.mutate({ recipeId: recipe.id });
