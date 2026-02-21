@@ -8,6 +8,28 @@ import type * as schema from "@/server/db/schema";
 
 type Db = PostgresJsDatabase<typeof schema>;
 
+async function updateSubscriptionStatus(
+	db: Db,
+	status: string,
+	customerId: string,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	customer: any,
+): Promise<void> {
+	const externalId = customer?.externalId;
+	if (externalId) {
+		// Prioritise externalId (Better Auth user.id) — also stores polarCustomerId if missing
+		await db
+			.update(user)
+			.set({ subscriptionStatus: status, polarCustomerId: customerId })
+			.where(eq(user.id, externalId));
+	} else {
+		await db
+			.update(user)
+			.set({ subscriptionStatus: status })
+			.where(eq(user.polarCustomerId, customerId));
+	}
+}
+
 export async function handlePolarPayload(
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	payload: any,
@@ -23,24 +45,15 @@ export async function handlePolarPayload(
 			break;
 
 		case "subscription.active":
-			await db
-				.update(user)
-				.set({ subscriptionStatus: "active" })
-				.where(eq(user.polarCustomerId, payload.data.customerId));
+			await updateSubscriptionStatus(db, "active", payload.data.customerId, payload.data.customer);
 			break;
 
 		case "subscription.canceled":
-			await db
-				.update(user)
-				.set({ subscriptionStatus: "canceled" })
-				.where(eq(user.polarCustomerId, payload.data.customerId));
+			await updateSubscriptionStatus(db, "canceled", payload.data.customerId, payload.data.customer);
 			break;
 
 		case "subscription.revoked":
-			await db
-				.update(user)
-				.set({ subscriptionStatus: "revoked" })
-				.where(eq(user.polarCustomerId, payload.data.customerId));
+			await updateSubscriptionStatus(db, "revoked", payload.data.customerId, payload.data.customer);
 			break;
 	}
 }

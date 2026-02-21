@@ -40,6 +40,7 @@ describe("handlePolarPayload: customer.created", () => {
 			),
 		).resolves.not.toThrow();
 	});
+
 });
 
 describe("handlePolarPayload: subscription.active", () => {
@@ -54,7 +55,7 @@ describe("handlePolarPayload: subscription.active", () => {
 		await handlePolarPayload(
 			{
 				type: "subscription.active",
-				data: { customerId: polarCustomerId },
+				data: { customerId: polarCustomerId, customer: { externalId: null } },
 			},
 			testDb as any,
 		);
@@ -65,6 +66,30 @@ describe("handlePolarPayload: subscription.active", () => {
 			.where(eq(user.id, testUser.id));
 
 		expect(updated?.subscriptionStatus).toBe("active");
+	});
+
+	it("sets subscriptionStatus and polarCustomerId via customer.externalId when polarCustomerId not in DB", async () => {
+		const polarCustomerId = "polar-cust-no-link-test";
+		const testUser = await createTestUser();
+
+		await handlePolarPayload(
+			{
+				type: "subscription.active",
+				data: {
+					customerId: polarCustomerId,
+					customer: { externalId: testUser.id },
+				},
+			},
+			testDb as any,
+		);
+
+		const [updated] = await testDb
+			.select({ subscriptionStatus: user.subscriptionStatus, polarCustomerId: user.polarCustomerId })
+			.from(user)
+			.where(eq(user.id, testUser.id));
+
+		expect(updated?.subscriptionStatus).toBe("active");
+		expect(updated?.polarCustomerId).toBe(polarCustomerId);
 	});
 });
 
@@ -80,7 +105,7 @@ describe("handlePolarPayload: subscription.canceled", () => {
 		await handlePolarPayload(
 			{
 				type: "subscription.canceled",
-				data: { customerId: polarCustomerId },
+				data: { customerId: polarCustomerId, customer: { externalId: null } },
 			},
 			testDb as any,
 		);
@@ -91,6 +116,30 @@ describe("handlePolarPayload: subscription.canceled", () => {
 			.where(eq(user.id, testUser.id));
 
 		expect(updated?.subscriptionStatus).toBe("canceled");
+	});
+
+	it("sets subscriptionStatus and polarCustomerId via customer.externalId when polarCustomerId not in DB", async () => {
+		const polarCustomerId = "polar-cust-canceled-no-link-test";
+		const testUser = await createTestUser();
+
+		await handlePolarPayload(
+			{
+				type: "subscription.canceled",
+				data: {
+					customerId: polarCustomerId,
+					customer: { externalId: testUser.id },
+				},
+			},
+			testDb as any,
+		);
+
+		const [updated] = await testDb
+			.select({ subscriptionStatus: user.subscriptionStatus, polarCustomerId: user.polarCustomerId })
+			.from(user)
+			.where(eq(user.id, testUser.id));
+
+		expect(updated?.subscriptionStatus).toBe("canceled");
+		expect(updated?.polarCustomerId).toBe(polarCustomerId);
 	});
 });
 
@@ -106,7 +155,7 @@ describe("handlePolarPayload: subscription.revoked", () => {
 		await handlePolarPayload(
 			{
 				type: "subscription.revoked",
-				data: { customerId: polarCustomerId },
+				data: { customerId: polarCustomerId, customer: { externalId: null } },
 			},
 			testDb as any,
 		);
@@ -117,5 +166,29 @@ describe("handlePolarPayload: subscription.revoked", () => {
 			.where(eq(user.id, testUser.id));
 
 		expect(updated?.subscriptionStatus).toBe("revoked");
+	});
+
+	it("sets subscriptionStatus and polarCustomerId via customer.externalId when polarCustomerId not in DB", async () => {
+		const polarCustomerId = "polar-cust-revoked-no-link-test";
+		const testUser = await createTestUser();
+
+		await handlePolarPayload(
+			{
+				type: "subscription.revoked",
+				data: {
+					customerId: polarCustomerId,
+					customer: { externalId: testUser.id },
+				},
+			},
+			testDb as any,
+		);
+
+		const [updated] = await testDb
+			.select({ subscriptionStatus: user.subscriptionStatus, polarCustomerId: user.polarCustomerId })
+			.from(user)
+			.where(eq(user.id, testUser.id));
+
+		expect(updated?.subscriptionStatus).toBe("revoked");
+		expect(updated?.polarCustomerId).toBe(polarCustomerId);
 	});
 });
