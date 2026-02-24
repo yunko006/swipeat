@@ -5,7 +5,7 @@ import { appRouter } from "@/server/api/root";
 import { createCallerFactory } from "@/server/api/trpc";
 import { testDb } from "./db";
 import type { TestUser } from "./auth";
-import { createTestSession } from "./auth";
+import { createTestSession, createSubscribedTestUser } from "./auth";
 
 const createCaller = createCallerFactory(appRouter);
 
@@ -24,4 +24,17 @@ export function createUnauthenticatedCaller() {
 		session: null,
 		headers: new Headers(),
 	});
+}
+
+export async function createSubscribedCaller() {
+	const testUser = await createSubscribedTestUser();
+	const session = createTestSession(testUser);
+	return {
+		caller: createCaller({
+			db: testDb as any,
+			session: session as any,
+			headers: new Headers(),
+		}),
+		testUser,
+	};
 }

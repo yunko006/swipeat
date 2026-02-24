@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChefHat, ArrowLeft, Settings } from "lucide-react";
 import Link from "next/link";
+import { useSubscription } from "@/hooks/use-subscription";
 import { ProfileCard } from "@/components/cookbook/profil-card";
 import { TabsNavigation } from "@/components/cookbook/tabs-navigation";
 import { RecipeGrid } from "@/components/cookbook/recipe-grid";
@@ -15,10 +16,11 @@ type Tab = "likes" | "imports" | "historique";
 export default function cookbookPage() {
   const [activeTab, setActiveTab] = useState<Tab>("likes");
   const { data: session } = useSession();
+  const { isSubscribed } = useSubscription();
 
   const { data: savedRecipes = [], isLoading: isLoadingSaved } =
     api.savedRecipes.getUserSavedRecipes.useQuery(undefined, {
-      enabled: !!session,
+      enabled: isSubscribed,
     });
 
   const { data: importedRecipes = [], isLoading: isLoadingImported } =
@@ -82,9 +84,12 @@ export default function cookbookPage() {
             <ChefHat className="w-6 h-6 text-foreground" />
             <span className="text-xl font-bold text-foreground">letmecook</span>
           </Link>
-          <button className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+          <Link
+            href="/settings"
+            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
             <Settings className="w-5 h-5" />
-          </button>
+          </Link>
         </div>
       </header>
 

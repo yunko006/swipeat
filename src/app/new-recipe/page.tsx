@@ -5,6 +5,7 @@ import type React from "react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSubscription } from "@/hooks/use-subscription";
 import {
   ChefHat,
   ArrowLeft,
@@ -49,11 +50,19 @@ const extractionSteps: ExtractionStep[] = [
 
 export default function NouvelleRecettePage() {
   const router = useRouter();
+  const { isSubscribed, isLoading: subscriptionLoading } = useSubscription();
   const [url, setUrl] = useState("");
   const [isExtracting, setIsExtracting] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [error, setError] = useState("");
+
+  // Redirect non-subscribed users to checkout
+  useEffect(() => {
+    if (!subscriptionLoading && !isSubscribed) {
+      router.replace(`/checkout?products=${process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID}`);
+    }
+  }, [isSubscribed, subscriptionLoading, router]);
 
   const isValidUrl = (input: string) => {
     return (

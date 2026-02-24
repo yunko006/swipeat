@@ -45,6 +45,8 @@ export const user = pgTable("user", {
 	updatedAt: timestamp("updated_at")
 		.$defaultFn(() => /* @__PURE__ */ new Date())
 		.notNull(),
+	polarCustomerId: text("polar_customer_id"),
+	subscriptionStatus: text("subscription_status"), // raw Polar status, seul "active" donne accès
 });
 
 export const session = pgTable("session", {

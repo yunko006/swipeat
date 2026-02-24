@@ -2,12 +2,12 @@
 // ABOUTME: Handles user recipe bookmarking (save/unsave/check)
 
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, subscribedProcedure } from "@/server/api/trpc";
 import { userSavedRecipes } from "@/server/db/schema";
 import { and, eq } from "drizzle-orm";
 
 export const savedRecipesRouter = createTRPCRouter({
-	toggle: protectedProcedure
+	toggle: subscribedProcedure
 		.input(z.object({ recipeId: z.string().uuid() }))
 		.mutation(async ({ ctx, input }) => {
 			const existing = await ctx.db.query.userSavedRecipes.findFirst({
@@ -35,7 +35,7 @@ export const savedRecipesRouter = createTRPCRouter({
 			}
 		}),
 
-	isSaved: protectedProcedure
+	isSaved: subscribedProcedure
 		.input(z.object({ recipeId: z.string().uuid() }))
 		.query(async ({ ctx, input }) => {
 			const saved = await ctx.db.query.userSavedRecipes.findFirst({
@@ -48,7 +48,7 @@ export const savedRecipesRouter = createTRPCRouter({
 			return { saved: !!saved };
 		}),
 
-	getUserSavedRecipes: protectedProcedure.query(async ({ ctx }) => {
+	getUserSavedRecipes: subscribedProcedure.query(async ({ ctx }) => {
 		const savedRecipes = await ctx.db.query.userSavedRecipes.findMany({
 			where: eq(userSavedRecipes.userId, ctx.session.user.id),
 			with: {
