@@ -48,16 +48,8 @@ export function BentoIngredients({ recipe }: BentoIngredientsProps) {
 		totalTime > 0 ? `${totalTime} min` : "Temps non spécifié";
 
 	return (
-		<div className="group relative bg-card border border-border rounded-2xl overflow-hidden hover:border-foreground/20 transition-all flex flex-col h-full">
-			{/* Marge rouge - style cahier */}
-			<div className="absolute left-8 top-0 bottom-0 w-px bg-rose-500/40" />
-
-			{/* Trous de reliure */}
-			<div className="absolute left-2 top-[15%] w-3 h-3 rounded-full border-2 border-foreground/20" />
-			<div className="absolute left-2 top-[45%] w-3 h-3 rounded-full border-2 border-foreground/20" />
-			<div className="absolute left-2 top-[75%] w-3 h-3 rounded-full border-2 border-foreground/20" />
-
-			<div className="p-6 pl-12 flex flex-col h-full overflow-hidden">
+		<div className="flex flex-col">
+			<div className="flex flex-col overflow-hidden">
 				{/* Header avec titre et meta */}
 				<div className="mb-4 pb-4 border-b border-foreground/15 shrink-0">
 					<div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
@@ -85,11 +77,11 @@ export function BentoIngredients({ recipe }: BentoIngredientsProps) {
 					<h3 className="text-xs tracking-widest uppercase text-muted-foreground mb-3 sticky top-0 bg-card py-1">
 						Ingrédients
 					</h3>
-					<div className="columns-2 gap-4">
+					<div className="grid grid-cols-2 gap-x-4">
 						{recipe.ingredients.map((ingredient, i) => (
 							<div
 								key={i}
-								className="flex items-start gap-2 cursor-pointer group/item py-2 break-inside-avoid border-b border-foreground/10"
+								className="flex items-start gap-2 cursor-pointer group/item py-2 border-b border-foreground/10"
 								onClick={() => toggleIngredient(i)}
 							>
 								<div
@@ -120,3 +112,4 @@ export function BentoIngredients({ recipe }: BentoIngredientsProps) {
 		</div>
 	);
 }
+
